@@ -7,32 +7,37 @@ WINDOW_WIDTH :: 1280
 WINDOW_HEIGHT :: 720
 SPEED :: 200
 
-players: [dynamic]^Player
+IDLE_FRAME :: 3
+
+characers: [dynamic]^Character
+
 
 main :: proc() {
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Odin Game")
 
-	player := Player {
-		speed = 200.0,
-	}
-
-	append(&players, &player)
-	defer delete(players)
-
-	animation_player_run := Animation {
+	animation_run := Animation {
 		texture   = rl.LoadTexture("cat_run.png"),
 		frames    = 4,
+		idle_frame = 3,
 		step_time = 0.1,
 	}
 
-	player.position = rl.Vector2 {
-		WINDOW_WIDTH / 2 - f32(animation_player_run.texture.width),
-		WINDOW_HEIGHT / 2 - f32(animation_player_run.texture.height),
+	character := Character {
+		speed = 200.0,
 	}
 
-	target_pos: rl.Vector2
+	append(&characers, &character)
+	defer delete(characers)
 
-	player_idle_frame := 3
+	start_pos := rl.Vector2 {
+		WINDOW_WIDTH / 2 - f32(animation_run.texture.width),
+		WINDOW_HEIGHT / 2 - f32(animation_run.texture.height),
+	}
+
+	init_character(&character, start_pos, animation_run.texture.width, animation_run.texture.height)
+	character.current_animation = &animation_run
+
+	target_pos: rl.Vector2
 
 	player_is_running: bool
 	flip_animation: bool
@@ -47,80 +52,84 @@ main :: proc() {
 
 			fmt.printf("Target: %v\n", target_pos)
 
-			for p in players {
-				if rl.CheckCollisionPointRec(target_pos, p.rect) {
-					fmt.printf("Player %v clicked!\n", p)
+			for c in characers {
+				c.target_pos = target_pos
+				if rl.CheckCollisionPointRec(target_pos, c.rect) {
+					fmt.printf("Player %v clicked!\n", c)
 				}
 			}
 
 		}
-		if target_pos != rl.Vector2(0) {
-			if target_pos.x < player.position.x {
-				flip_animation = true
-			} else {
-				flip_animation = false
-			}
 
-			player_is_running = true
-			if _, arrived_at_pos := move_player_position(
-				&player,
-				animation_player_run,
-				target_pos,
-			); arrived_at_pos {
-				target_pos = rl.Vector2(0)
-				player_is_running = false
-			}
-		}
-
-		for p in players {
-			if player_is_running {
-				// fmt.printf("Player moving toward %v: %v\n", target_pos, p.position)
-			}
-		}
-
-		if player_is_running {
-			start_animate(&animation_player_run)
-		} else {
-			stop_animate(&animation_player_run, player_idle_frame)
-		}
-
-		player_run_frame_width :=
-			f32(animation_player_run.texture.width) / f32(animation_player_run.frames)
-
-		draw_player_source := rl.Rectangle {
-			x      = f32(animation_player_run.current_frame) * player_run_frame_width,
-			y      = 0,
-			width  = player_run_frame_width,
-			height = f32(animation_player_run.texture.height),
-		}
-
-		if flip_animation {
-			draw_player_source.width = -draw_player_source.width
-		}
-
-		draw_player_dest := rl.Rectangle {
-			x      = player.position.x,
-			y      = player.position.y,
-			width  = player_run_frame_width * 4,
-			height = f32(animation_player_run.texture.height) * 4,
-		}
-
-		player.rect = draw_player_dest
 
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
-		rl.DrawTexturePro(
-			animation_player_run.texture,
-			draw_player_source,
-			draw_player_dest,
-			0,
-			0,
-			rl.WHITE,
-		)
-		rl.DrawCircleV(player.position, 2.0, rl.BLUE)
+
+		for c in characers {
+			handle_character(c)
+			draw_character(c)
+		}
+
+		rl.DrawCircleV(character.position, 2.0, rl.BLUE)
 		rl.DrawCircleV(target_pos, 2.0, rl.RED)
 		rl.EndDrawing()
 	}
 
 	rl.CloseWindow()
+}
+
+handle_character :: proc (character: ^Character) {
+	if character.target_pos != rl.Vector2(0) {
+		character.is_running = true
+		if _, arrived_at_pos := move_character(
+			character,
+		); arrived_at_pos {
+			character.target_pos = rl.Vector2(0)
+			character.is_running = false
+		}
+	}
+}
+
+draw_character :: proc (character: ^Character) {
+	if (character.current_animation == nil) {
+		panic("Character animation unknown")
+	}
+
+	player_run_frame_width :=
+		f32(character.current_animation.texture.width) / f32(character.current_animation.frames)
+
+	draw_player_source := rl.Rectangle {
+		x      = f32(character.current_animation.current_frame) * player_run_frame_width,
+		y      = 0,
+		width  = player_run_frame_width,
+		height = f32(character.current_animation.texture.height),
+	}
+
+	draw_player_dest := rl.Rectangle {
+		x      = character.position.x,
+		y      = character.position.y,
+		width  = player_run_frame_width * 4,
+		height = f32(character.current_animation.texture.height) * 4,
+	}
+
+	character.rect = draw_player_dest
+
+	if should_flip_animation(character^) {
+		draw_player_source.width = -draw_player_source.width
+	}
+
+	if character.is_running {
+		start_animate(character.current_animation)
+	} else {
+		stop_animate(character.current_animation)
+	}
+
+	rl.DrawTexturePro(
+		character.current_animation.texture,
+		draw_player_source,
+		draw_player_dest,
+		0,
+		0,
+		rl.WHITE,
+	)
 }

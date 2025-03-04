@@ -9,6 +9,7 @@ Animation :: struct {
 
 	frame_timer: f32,
 	current_frame: int,
+	idle_frame: int,
 	running: bool,
 	finished: bool,
 }
@@ -32,8 +33,8 @@ start_animate :: proc(animation: ^Animation, oneshot: bool = false) {
 	}
 }
 
-stop_animate :: proc(animation: ^Animation, idle_frame: int = 0) {
-	animation.current_frame = idle_frame
+stop_animate :: proc(animation: ^Animation) {
+	animation.current_frame = animation.idle_frame
 	animation.running = false
 	animation.finished = false
 }

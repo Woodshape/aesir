@@ -17,6 +17,7 @@ main :: proc() {
 	}
 
 	append(&players, &player)
+	defer delete(players)
 
 	animation_player_run := Animation {
 		texture   = rl.LoadTexture("cat_run.png"),
@@ -38,17 +39,17 @@ main :: proc() {
 
 	for !rl.WindowShouldClose() {
 		if rl.IsMouseButtonPressed(rl.MouseButton.LEFT) {
-			mousePos: rl.Vector2 = rl.GetMousePosition()
-			target_pos = rl.Vector2 {
-				mousePos.x - f32(animation_player_run.texture.width / 2),
-				mousePos.y - f32(animation_player_run.texture.height * 2),
-			}
+			target_pos = rl.GetMousePosition()
+			// target_pos = rl.Vector2 {
+			// 	mousePos.x - f32(animation_player_run.texture.width / 2),
+			// 	mousePos.y - f32(animation_player_run.texture.height * 2),
+			// }
 
 			fmt.printf("Target: %v\n", target_pos)
 
 			for p in players {
 				if rl.CheckCollisionPointRec(target_pos, p.rect) {
-					fmt.printf("Player %v clicked!", p)
+					fmt.printf("Player %v clicked!\n", p)
 				}
 			}
 

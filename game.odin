@@ -7,15 +7,21 @@ WINDOW_WIDTH :: 1280
 WINDOW_HEIGHT :: 720
 SPEED :: 200
 
+players: [dynamic]^Player
+
 main :: proc() {
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Odin Game")
 
-	player := Player{ speed = 200.0 }
+	player := Player {
+		speed = 200.0,
+	}
+
+	append(&players, &player)
 
 	animation_player_run := Animation {
-		texture = rl.LoadTexture("cat_run.png"),
-		frames = 4,
-		step_time = 0.1
+		texture   = rl.LoadTexture("cat_run.png"),
+		frames    = 4,
+		step_time = 0.1,
 	}
 
 	player.position = rl.Vector2 {
@@ -23,7 +29,7 @@ main :: proc() {
 		WINDOW_HEIGHT / 2 - f32(animation_player_run.texture.height),
 	}
 
-	target_pos : rl.Vector2
+	target_pos: rl.Vector2
 
 	player_idle_frame := 3
 
@@ -37,7 +43,15 @@ main :: proc() {
 				mousePos.x - f32(animation_player_run.texture.width / 2),
 				mousePos.y - f32(animation_player_run.texture.height * 2),
 			}
-			fmt.println(target_pos)
+
+			fmt.printf("Target: %v\n", target_pos)
+
+			for p in players {
+				if rl.CheckCollisionPointRec(target_pos, p.rect) {
+					fmt.printf("Player %v clicked!", p)
+				}
+			}
+
 		}
 		if target_pos != rl.Vector2(0) {
 			if target_pos.x < player.position.x {
@@ -47,9 +61,19 @@ main :: proc() {
 			}
 
 			player_is_running = true
-			if _, at_pos := move_player_position(&player, animation_player_run, target_pos); at_pos {
+			if _, arrived_at_pos := move_player_position(
+				&player,
+				animation_player_run,
+				target_pos,
+			); arrived_at_pos {
 				target_pos = rl.Vector2(0)
 				player_is_running = false
+			}
+		}
+
+		for p in players {
+			if player_is_running {
+				// fmt.printf("Player moving toward %v: %v\n", target_pos, p.position)
 			}
 		}
 
@@ -59,7 +83,8 @@ main :: proc() {
 			stop_animate(&animation_player_run, player_idle_frame)
 		}
 
-		player_run_frame_width := f32(animation_player_run.texture.width) / f32(animation_player_run.frames)
+		player_run_frame_width :=
+			f32(animation_player_run.texture.width) / f32(animation_player_run.frames)
 
 		draw_player_source := rl.Rectangle {
 			x      = f32(animation_player_run.current_frame) * player_run_frame_width,
@@ -79,9 +104,18 @@ main :: proc() {
 			height = f32(animation_player_run.texture.height) * 4,
 		}
 
+		player.rect = draw_player_dest
+
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
-		rl.DrawTexturePro(animation_player_run.texture, draw_player_source, draw_player_dest, 0, 0, rl.WHITE)
+		rl.DrawTexturePro(
+			animation_player_run.texture,
+			draw_player_source,
+			draw_player_dest,
+			0,
+			0,
+			rl.WHITE,
+		)
 		rl.DrawCircleV(player.position, 2.0, rl.BLUE)
 		rl.DrawCircleV(target_pos, 2.0, rl.RED)
 		rl.EndDrawing()

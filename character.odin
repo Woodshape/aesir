@@ -1,33 +1,27 @@
-package main
+package game
 
 import rl "vendor:raylib"
 
 Character :: struct {
-	position: rl.Vector2,
-	rect:     rl.Rectangle,
-	speed:    f32,
-
-	is_running:	bool,
+	position:          rl.Vector2,
+	rect:              rl.Rectangle,
+	speed:             f32,
+	is_running:        bool,
 	current_animation: ^Animation,
-	target_pos: rl.Vector2,
+	target_pos:        rl.Vector2,
 }
 
 init_character :: proc(character: ^Character, position: rl.Vector2, width, height: i32) {
 	character.position = position
-	character.rect = rl.Rectangle{
-		x = position.x,
-		y = position.y,
-		width = f32(width),
-		height = f32(height)
+	character.rect = rl.Rectangle {
+		x      = position.x,
+		y      = position.y,
+		width  = f32(width),
+		height = f32(height),
 	}
 }
 
-move_character :: proc(
-	character: ^Character,
-) -> (
-	distance: f32,
-	at_target: bool,
-) {
+move_character :: proc(character: ^Character) -> (distance: f32, at_target: bool) {
 	return move_character_position(character, character.target_pos)
 }
 

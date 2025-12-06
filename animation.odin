@@ -1,21 +1,20 @@
-package main
+package game
 
 import rl "vendor:raylib"
 
 Animation :: struct {
-	texture: rl.Texture2D,
-	frames: int,
-	step_time: f32,
-
-	frame_timer: f32,
+	texture:       rl.Texture2D,
+	frames:        int,
+	step_time:     f32,
+	frame_timer:   f32,
 	current_frame: int,
-	idle_frame: int,
-	running: bool,
-	finished: bool,
+	idle_frame:    int,
+	running:       bool,
+	finished:      bool,
 }
 
 start_animate :: proc(animation: ^Animation, oneshot: bool = false) {
-	if animation.finished { return }
+	if animation.finished {return}
 
 	animation.running = true
 

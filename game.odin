@@ -18,6 +18,7 @@ main :: proc() {
 	player_vel: rl.Vector2
 
 	player_on_ground: bool = false
+	player_flip_sprite: bool = false
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -27,8 +28,10 @@ main :: proc() {
 
 		if rl.IsKeyDown(.LEFT) || rl.IsKeyDown(.A) {
 			player_vel.x = -SPEED
+			player_flip_sprite = true
 		} else if rl.IsKeyDown(.RIGHT) || rl.IsKeyDown(.D) {
 			player_vel.x = SPEED
+			player_flip_sprite = false
 		} else {
 			player_vel.x = 0
 		}
@@ -65,6 +68,10 @@ main :: proc() {
 			y      = 0,
 			width  = player_run_width / f32(player_run_frames),
 			height = player_run_height,
+		}
+
+		if player_flip_sprite {
+			player_source.width = -player_source.width
 		}
 
 		player_dest: rl.Rectangle = {

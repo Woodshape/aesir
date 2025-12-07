@@ -55,9 +55,10 @@ main :: proc() {
 		player_run_height: f32 = f32(player_run_texture.height)
 
 		player_run_frame_timer += frame_time
-		if player_run_frame_timer > player_run_frame_length {
-			player_run_frame_timer = 0
+		for player_run_frame_timer > player_run_frame_length {
+			player_run_frame_timer -= player_run_frame_length
 			player_run_current_frame += 1
+
 			if player_run_current_frame >= player_run_frames {
 				player_run_current_frame = 0
 			}

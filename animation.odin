@@ -34,15 +34,15 @@ draw_animation :: proc(animation: Animation, position: rl.Vector2, flip_sprite: 
 		height = player_run_height,
 	}
 
-	if flip_sprite {
-		player_source.width = -player_source.width
-	}
-
 	player_dest: rl.Rectangle = {
 		x      = position.x,
 		y      = position.y,
 		width  = player_run_width * 4 / f32(animation.frames),
 		height = player_run_height * 4,
+	}
+
+	if flip_sprite {
+		player_source.width = -player_source.width
 	}
 
 	rl.DrawTexturePro(animation.texture, player_source, player_dest, {}, 0, tint = rl.RAYWHITE)
@@ -54,6 +54,8 @@ test_update :: proc(t: ^testing.T) {
 		frames       = 2,
 		frame_length = 1,
 	}
+
+	update_animation(&animation, 0.5)
 
 	testing.expect_value(t, animation.current_frame, 0)
 

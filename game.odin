@@ -1,10 +1,51 @@
 package game
 
 import "core:fmt"
+import "core:testing"
 import rl "vendor:raylib"
 
 SPEED: f32 : 400.0
 GRAVITY: f32 : 2000.0
+
+Enemy :: struct {
+	hp: i32,
+}
+
+do_stuff_with_enemy :: proc(enemy: ^Enemy) {
+
+}
+
+Skeleton :: struct {
+	using enemy: Enemy,
+	bones:       i32,
+}
+
+EnemyVariant :: union {
+	^Skeleton,
+}
+
+EnemyContainer :: struct {
+	variant: EnemyVariant,
+}
+
+@(test)
+test_enemy_stuff :: proc(t: ^testing.T) {
+	skeleton: ^Skeleton = new(Skeleton)
+	defer free(skeleton)
+
+	skeleton.hp = 100
+	skeleton.bones = 250
+
+	skeleton_container: EnemyContainer = {
+		variant = skeleton,
+	}
+
+	do_stuff_with_enemy(skeleton)
+
+	myEnemyList: [dynamic]^EnemyContainer
+	append(&myEnemyList, &skeleton_container)
+	delete(myEnemyList)
+}
 
 main :: proc() {
 	rl.InitWindow(1280, 720, "Aesir")

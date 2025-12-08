@@ -1,5 +1,6 @@
 package game
 
+import "core:testing"
 import rl "vendor:raylib"
 
 Animation :: struct {
@@ -12,7 +13,7 @@ Animation :: struct {
 
 update_animation :: proc(animation: ^Animation, frame_time: f32) {
 	animation.frame_timer += frame_time
-	for animation.frame_timer > animation.frame_length {
+	for animation.frame_timer >= animation.frame_length {
 		animation.frame_timer -= animation.frame_length
 		animation.current_frame += 1
 
@@ -45,4 +46,22 @@ draw_animation :: proc(animation: Animation, position: rl.Vector2, flip_sprite: 
 	}
 
 	rl.DrawTexturePro(animation.texture, player_source, player_dest, {}, 0, tint = rl.RAYWHITE)
+}
+
+@(test)
+test_update :: proc(t: ^testing.T) {
+	animation := Animation {
+		frames       = 2,
+		frame_length = 1,
+	}
+
+	testing.expect_value(t, animation.current_frame, 0)
+
+	update_animation(&animation, 1)
+
+	testing.expect_value(t, animation.current_frame, 1)
+
+	update_animation(&animation, 1)
+
+	testing.expect_value(t, animation.current_frame, 0)
 }

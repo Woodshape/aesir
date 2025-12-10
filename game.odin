@@ -1,6 +1,7 @@
 package game
 
 import "core:fmt"
+import "core:log"
 import "core:testing"
 import rl "vendor:raylib"
 
@@ -8,11 +9,19 @@ SPEED: f32 : 400.0
 GRAVITY: f32 : 2000.0
 
 Enemy :: struct {
-	hp: i32,
+	hp:      i32,
+	variant: EnemyVariant,
 }
 
 do_stuff_with_enemy :: proc(enemy: ^Enemy) {
-
+	switch variant in enemy.variant {
+	case ^Skeleton:
+		log.infof("skeleton field 'bones': %v", variant.bones)
+	case ^Bat:
+		log.infof("bat field 'flying': %v", variant.flying)
+	case:
+		log.panicf("unhandled variant: %v\n", variant)
+	}
 }
 
 Skeleton :: struct {
@@ -20,27 +29,44 @@ Skeleton :: struct {
 	bones:       i32,
 }
 
+Bat :: struct {
+	using enemy: Enemy,
+	flying:      bool,
+}
+
 EnemyVariant :: union {
 	^Skeleton,
+	^Bat,
 }
 
 EnemyContainer :: struct {
 	variant: EnemyVariant,
 }
 
+new_enemy :: proc($T: typeid) -> ^T {
+	e := new(T)
+	e.variant = e
+	return e
+}
+
 @(test)
 test_enemy_stuff :: proc(t: ^testing.T) {
-	skeleton: ^Skeleton = new(Skeleton)
+	skeleton: ^Skeleton = new_enemy(Skeleton)
 	defer free(skeleton)
+	bat: ^Bat = new_enemy(Bat)
+	defer free(bat)
 
 	skeleton.hp = 100
 	skeleton.bones = 250
+
+	log.infof("%v\n", skeleton)
 
 	skeleton_container: EnemyContainer = {
 		variant = skeleton,
 	}
 
 	do_stuff_with_enemy(skeleton)
+	do_stuff_with_enemy(bat)
 
 	myEnemyList: [dynamic]^EnemyContainer
 	append(&myEnemyList, &skeleton_container)

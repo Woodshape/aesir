@@ -22,6 +22,7 @@ do_stuff_with_enemy :: proc(enemy: ^Enemy) {
 	switch variant in enemy.variant {
 	case ^Skeleton:
 		log.infof("skeleton field 'bones': %v", variant.bones)
+		update_skeleton(variant, 1)
 	case ^Bat:
 		log.infof("bat field 'flying': %v", variant.flying)
 	case:
@@ -32,6 +33,11 @@ do_stuff_with_enemy :: proc(enemy: ^Enemy) {
 Skeleton :: struct {
 	using enemy: Enemy,
 	bones:       i32,
+}
+
+update_skeleton :: proc(skeleton: ^Skeleton, frame_time: f32) {
+	skeleton.bones += 10
+	log.infof("skeleton update: %v", skeleton)
 }
 
 Bat :: struct {
@@ -70,11 +76,14 @@ test_enemy_stuff :: proc(t: ^testing.T) {
 	// 	variant = skeleton,
 	// }
 	skeleton_container := new_enemy_container(skeleton)
+	defer free(skeleton_container)
 
 	log.infof("%v\n", skeleton_container)
 
 	do_stuff_with_enemy(skeleton)
 	do_stuff_with_enemy(bat)
+
+	log.infof("%v\n", skeleton)
 
 	myEnemyList: [dynamic]^EnemyContainer
 	append(&myEnemyList, skeleton_container)

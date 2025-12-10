@@ -1,6 +1,5 @@
 package game
 
-import "core:fmt"
 import "core:log"
 import "core:testing"
 import rl "vendor:raylib"
@@ -11,6 +10,12 @@ GRAVITY: f32 : 2000.0
 Enemy :: struct {
 	hp:      i32,
 	variant: EnemyVariant,
+}
+
+new_enemy :: proc($T: typeid) -> ^T {
+	e := new(T)
+	e.variant = e
+	return e
 }
 
 do_stuff_with_enemy :: proc(enemy: ^Enemy) {
@@ -43,9 +48,9 @@ EnemyContainer :: struct {
 	variant: EnemyVariant,
 }
 
-new_enemy :: proc($T: typeid) -> ^T {
-	e := new(T)
-	e.variant = e
+new_enemy_container :: proc(enemy: EnemyVariant) -> ^EnemyContainer {
+	e := new(EnemyContainer)
+	e.variant = enemy
 	return e
 }
 
@@ -61,16 +66,21 @@ test_enemy_stuff :: proc(t: ^testing.T) {
 
 	log.infof("%v\n", skeleton)
 
-	skeleton_container: EnemyContainer = {
-		variant = skeleton,
-	}
+	// skeleton_container: EnemyContainer = {
+	// 	variant = skeleton,
+	// }
+	skeleton_container := new_enemy_container(skeleton)
+
+	log.infof("%v\n", skeleton_container)
 
 	do_stuff_with_enemy(skeleton)
 	do_stuff_with_enemy(bat)
 
 	myEnemyList: [dynamic]^EnemyContainer
-	append(&myEnemyList, &skeleton_container)
-	delete(myEnemyList)
+	append(&myEnemyList, skeleton_container)
+	defer delete(myEnemyList)
+
+	testing.expect(t, len(myEnemyList) == 1)
 }
 
 main :: proc() {

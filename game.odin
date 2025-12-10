@@ -18,13 +18,14 @@ new_enemy :: proc($T: typeid) -> ^T {
 	return e
 }
 
-do_stuff_with_enemy :: proc(enemy: ^Enemy) {
-	switch variant in enemy.variant {
+update_enemy :: proc(enemy: ^Enemy, frame_time: f32) {
+	#partial switch variant in enemy.variant {
 	case ^Skeleton:
 		log.infof("skeleton field 'bones': %v", variant.bones)
-		update_skeleton(variant, 1)
+		update_skeleton(variant, frame_time)
 	case ^Bat:
 		log.infof("bat field 'flying': %v", variant.flying)
+		variant.flying = !variant.flying
 	case:
 		log.panicf("unhandled variant: %v\n", variant)
 	}
@@ -71,6 +72,7 @@ test_enemy_stuff :: proc(t: ^testing.T) {
 	skeleton.bones = 250
 
 	log.infof("%v\n", skeleton)
+	log.infof("%v\n", bat)
 
 	// skeleton_container: EnemyContainer = {
 	// 	variant = skeleton,
@@ -80,16 +82,26 @@ test_enemy_stuff :: proc(t: ^testing.T) {
 
 	log.infof("%v\n", skeleton_container)
 
-	do_stuff_with_enemy(skeleton)
-	do_stuff_with_enemy(bat)
+	update_enemy(skeleton, 0.5)
+	update_enemy(bat, 0.5)
 
 	log.infof("%v\n", skeleton)
+	log.infof("%v\n", bat)
 
 	myEnemyList: [dynamic]^EnemyContainer
 	append(&myEnemyList, skeleton_container)
 	defer delete(myEnemyList)
 
 	testing.expect(t, len(myEnemyList) == 1)
+}
+
+Player :: struct {
+	hp:          i32,
+	animation:   ^Animation,
+	pos:         rl.Vector2,
+	vel:         rl.Vector2,
+	grounded:    bool,
+	flip_sprite: bool,
 }
 
 main :: proc() {
@@ -107,13 +119,11 @@ main :: proc() {
 		frame_length = 0.1,
 	}
 
-	player_animation: ^Animation = &player_idle_animation
-
-	player_pos: rl.Vector2 = {640, 360}
-	player_vel: rl.Vector2
-
-	player_on_ground: bool = false
-	player_flip_sprite: bool = false
+	player: Player = {
+		hp        = 100,
+		animation = &player_idle_animation,
+		pos       = {640, 360},
+	}
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -121,38 +131,38 @@ main :: proc() {
 		frame_time: f32 = rl.GetFrameTime()
 
 		if rl.IsKeyDown(.LEFT) || rl.IsKeyDown(.A) {
-			player_vel.x = -SPEED
-			player_flip_sprite = true
-			player_animation = &player_run_animation
+			player.vel.x = -SPEED
+			player.flip_sprite = true
+			player.animation = &player_run_animation
 		} else if rl.IsKeyDown(.RIGHT) || rl.IsKeyDown(.D) {
-			player_vel.x = SPEED
-			player_flip_sprite = false
-			player_animation = &player_run_animation
+			player.vel.x = SPEED
+			player.flip_sprite = false
+			player.animation = &player_run_animation
 		} else {
-			player_vel.x = 0.0
-			player_animation = &player_idle_animation
+			player.vel.x = 0.0
+			player.animation = &player_idle_animation
 		}
 
-		player_vel.y += GRAVITY * frame_time
+		player.vel.y += GRAVITY * frame_time
 
-		if rl.IsKeyPressed(.SPACE) && player_on_ground {
-			player_vel.y = -600
-			player_on_ground = false
+		if rl.IsKeyPressed(.SPACE) && player.grounded {
+			player.vel.y = -600
+			player.grounded = false
 		}
 
-		player_pos += player_vel * frame_time
+		player.pos += player.vel * frame_time
 
 		floor_pos: f32 = f32(rl.GetScreenHeight()) - 64
-		if player_pos.y > floor_pos {
-			player_pos.y = floor_pos
-			player_on_ground = true
+		if player.pos.y > floor_pos {
+			player.pos.y = floor_pos
+			player.grounded = true
 		}
 
-		update_animation(player_animation, frame_time)
+		update_animation(player.animation, frame_time)
 
 		rl.ClearBackground(rl.SKYBLUE)
 
-		draw_animation(player_animation^, player_pos, player_flip_sprite)
+		draw_animation(player.animation^, player.pos, player.flip_sprite)
 
 		rl.EndDrawing()
 	}

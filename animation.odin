@@ -1,5 +1,6 @@
 package game
 
+import "core:fmt"
 import "core:testing"
 import rl "vendor:raylib"
 
@@ -24,6 +25,19 @@ update_animation :: proc(animation: ^Animation, frame_time: f32) {
 			animation.current_frame = 0
 		}
 	}
+}
+
+change_animation :: proc(animation: ^Animation, new_animation: Animation) {
+	if animation.texture.id == new_animation.texture.id {
+		return
+	}
+
+	animation.texture = new_animation.texture
+	animation.frames = new_animation.frames
+	animation.frame_length = new_animation.frame_length
+
+	animation.frame_timer = 0
+	animation.current_frame = 0
 }
 
 draw_animation :: proc(animation: Animation, position: rl.Vector2, flip_sprite: bool) {

@@ -99,6 +99,7 @@ Player :: struct {
 	hp:          i32,
 	pos:         rl.Vector2,
 	vel:         rl.Vector2,
+	animation:   Animation,
 	grounded:    bool,
 	flip_sprite: bool,
 }
@@ -118,11 +119,10 @@ main :: proc() {
 		frame_length = 0.1,
 	}
 
-	player_animation: ^Animation = &player_idle_animation
-
 	player: Player = {
-		hp  = 100,
-		pos = {640, 360},
+		hp        = 100,
+		pos       = {640, 360},
+		animation = player_idle_animation,
 	}
 
 	for !rl.WindowShouldClose() {
@@ -133,14 +133,14 @@ main :: proc() {
 		if rl.IsKeyDown(.LEFT) || rl.IsKeyDown(.A) {
 			player.vel.x = -SPEED
 			player.flip_sprite = true
-			player_animation = &player_run_animation
+			change_animation(&player.animation, player_run_animation)
 		} else if rl.IsKeyDown(.RIGHT) || rl.IsKeyDown(.D) {
 			player.vel.x = SPEED
 			player.flip_sprite = false
-			player_animation = &player_run_animation
+			change_animation(&player.animation, player_run_animation)
 		} else {
 			player.vel.x = 0.0
-			player_animation = &player_idle_animation
+			change_animation(&player.animation, player_idle_animation)
 		}
 
 		player.vel.y += GRAVITY * frame_time
@@ -158,11 +158,11 @@ main :: proc() {
 			player.grounded = true
 		}
 
-		update_animation(player_animation, frame_time)
+		update_animation(&player.animation, frame_time)
 
 		rl.ClearBackground(rl.SKYBLUE)
 
-		draw_animation(player_animation^, player.pos, player.flip_sprite)
+		draw_animation(player.animation, player.pos, player.flip_sprite)
 
 		rl.EndDrawing()
 	}

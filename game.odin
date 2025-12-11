@@ -104,6 +104,20 @@ Player :: struct {
 	flip_sprite: bool,
 }
 
+Input :: struct {
+	move_left:  bool,
+	move_right: bool,
+	jump:       bool,
+}
+
+handle_input :: proc() -> Input {
+	return {
+		move_left = rl.IsKeyDown(.LEFT) || rl.IsKeyDown(.A),
+		move_right = rl.IsKeyDown(.RIGHT) || rl.IsKeyDown(.D),
+		jump = rl.IsKeyPressed(.SPACE),
+	}
+}
+
 main :: proc() {
 	rl.InitWindow(1280, 720, "Aesir")
 
@@ -130,11 +144,13 @@ main :: proc() {
 
 		frame_time: f32 = rl.GetFrameTime()
 
-		if rl.IsKeyDown(.LEFT) || rl.IsKeyDown(.A) {
+		input: Input = handle_input()
+
+		if input.move_left {
 			player.vel.x = -SPEED
 			player.flip_sprite = true
 			change_animation(&player.animation, player_run_animation)
-		} else if rl.IsKeyDown(.RIGHT) || rl.IsKeyDown(.D) {
+		} else if input.move_right {
 			player.vel.x = SPEED
 			player.flip_sprite = false
 			change_animation(&player.animation, player_run_animation)
@@ -145,7 +161,7 @@ main :: proc() {
 
 		player.vel.y += GRAVITY * frame_time
 
-		if rl.IsKeyPressed(.SPACE) && player.grounded {
+		if input.jump && player.grounded {
 			player.vel.y = -600
 			player.grounded = false
 		}

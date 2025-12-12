@@ -134,6 +134,21 @@ draw_animation :: proc(animation: Animation, position: rl.Vector2, flip_sprite: 
 test_load_animations :: proc(t: ^testing.T) {
 	rl.InitWindow(0, 0, "")
 	load_animation_data(context.temp_allocator)
+
+	// all animations should be loaded
+	testing.expect_value(t, len(animations), len(Animations))
+
+	for anim in animations {
+		// all animations should have frames and frame_length at least
+		testing.expect(t, anim.frames > 0)
+		testing.expect(t, anim.frame_length > 0)
+
+		// all textures should be of valid format and dimensions
+		testing.expect(t, anim.sprite.texture.format != .UNKNOWN)
+		testing.expect(t, anim.sprite.texture.width > 0)
+		testing.expect(t, anim.sprite.texture.height > 0)
+	}
+
 	free_all(context.temp_allocator)
 }
 

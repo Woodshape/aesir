@@ -19,15 +19,15 @@ new_enemy :: proc($T: typeid) -> ^T {
 }
 
 update_enemy :: proc(enemy: ^Enemy, frame_time: f32) {
-	#partial switch variant in enemy.variant {
+	#partial switch e_variant in enemy.variant {
 	case ^Skeleton:
-		log.infof("skeleton field 'bones': %v", variant.bones)
-		update_skeleton(variant, frame_time)
+		log.infof("skeleton field 'bones': %v", e_variant.bones)
+		update_skeleton(e_variant, frame_time)
 	case ^Bat:
-		log.infof("bat field 'flying': %v", variant.flying)
-		variant.flying = !variant.flying
+		log.infof("bat field 'flying': %v", e_variant.flying)
+		e_variant.flying = !e_variant.flying
 	case:
-		log.panicf("unhandled variant: %v\n", variant)
+		log.panicf("unhandled variant: %v\n", e_variant)
 	}
 }
 

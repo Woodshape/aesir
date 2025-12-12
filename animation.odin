@@ -12,22 +12,22 @@ Animations :: enum {
 	player_death,
 }
 
-Sprite_Data :: struct {
+SpriteData :: struct {
 	frames:   i8,
 	duration: f32,
 }
 
-sprite_data: [Animations]Sprite_Data = {
+sprite_data: [Animations]SpriteData = {
 	.player_idle = {frames = 2, duration = 0.3},
 	.player_run = {frames = 3, duration = 0.1},
 	.player_death = {frames = 3, duration = 0.2},
 }
 
-Animation_Data :: struct {
+AnimationData :: struct {
 	one_shot: bool,
 }
 
-animation_data: [Animations]Animation_Data = #partial {
+animation_data: [Animations]AnimationData = #partial {
 	.player_death = {one_shot = true},
 }
 
@@ -57,13 +57,13 @@ load_animation_data :: proc() {
 	}
 }
 
-Animation_Sprite :: struct {
+AnimationSprite :: struct {
 	animation: Animations,
 	texture:   rl.Texture2D,
 }
 
 Animation :: struct {
-	sprite:        Animation_Sprite,
+	sprite:        AnimationSprite,
 	frames:        i8,
 	current_frame: i8,
 	frame_length:  f32,

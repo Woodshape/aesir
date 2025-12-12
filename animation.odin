@@ -33,7 +33,7 @@ animation_data: [Animations]AnimationData = #partial {
 
 animations: [Animations]Animation
 
-load_animation_data :: proc() {
+load_animation_data :: proc(allocator := context.allocator) {
 	img_dir := "res/images/"
 
 	for anim in Animations {
@@ -41,7 +41,7 @@ load_animation_data :: proc() {
 		succ := os.is_file_path(path)
 		assert(succ, fmt.tprint(path, "not found"))
 
-		texture: rl.Texture2D = rl.LoadTexture(strings.clone_to_cstring(path))
+		texture: rl.Texture2D = rl.LoadTexture(strings.clone_to_cstring(path, allocator))
 
 		sprite := sprite_data[anim]
 		data := animation_data[anim]
@@ -128,6 +128,13 @@ draw_animation :: proc(animation: Animation, position: rl.Vector2, flip_sprite: 
 		0,
 		tint = rl.RAYWHITE,
 	)
+}
+
+@(test)
+test_load_animations :: proc(t: ^testing.T) {
+	rl.InitWindow(0, 0, "")
+	load_animation_data(context.temp_allocator)
+	free_all(context.temp_allocator)
 }
 
 @(test)

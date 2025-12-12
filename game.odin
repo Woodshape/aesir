@@ -34,13 +34,13 @@ main :: proc() {
 	rl.InitWindow(1280, 720, "Aesir")
 
 	player_idle_animation: Animation = {
-		texture      = rl.LoadTexture(ANIMATION_IDLE),
+		texture      = rl.LoadTexture(Player_Animation_Filenames[.Idle]),
 		frames       = 2,
 		frame_length = 0.5,
 	}
 
 	player_run_animation: Animation = {
-		texture      = rl.LoadTexture(ANIMATION_RUN),
+		texture      = rl.LoadTexture(Player_Animation_Filenames[.Run]),
 		frames       = 3,
 		frame_length = 0.1,
 	}

@@ -1,13 +1,23 @@
 package game
 
-import "core:fmt"
 import "core:testing"
 import rl "vendor:raylib"
 
 RES_FOLDER :: "res/images/"
 
-ANIMATION_IDLE :: RES_FOLDER + "player_idle.png"
-ANIMATION_RUN :: RES_FOLDER + "player_run.png"
+Animations :: enum {
+	Idle,
+	Run,
+}
+
+Player_Animation_Filenames :: [Animations]cstring {
+	.Idle = RES_FOLDER + "player_idle.png",
+	.Run  = RES_FOLDER + "player_run.png",
+}
+
+Enemy_Animation_Filenames :: #partial [Animations]cstring {
+	.Idle = RES_FOLDER + "enemy.png",
+}
 
 Animation :: struct {
 	texture:       rl.Texture2D,

@@ -159,15 +159,28 @@ test_update :: proc(t: ^testing.T) {
 		frame_length = 1,
 	}
 
+	// current frame should change according to frame_length and loop after N frames
 	update_animation(&animation, 0.5)
-
 	testing.expect_value(t, animation.current_frame, 0)
-
-	update_animation(&animation, 1)
-
+	update_animation(&animation, 0.5)
 	testing.expect_value(t, animation.current_frame, 1)
-
 	update_animation(&animation, 1)
-
 	testing.expect_value(t, animation.current_frame, 0)
+}
+
+@(test)
+test_update_one_shot :: proc(t: ^testing.T) {
+	animation := Animation {
+		frames       = 2,
+		frame_length = 1,
+		one_shot     = true,
+	}
+
+	// current frame should change according to frame_length and not loop after N frames
+	update_animation(&animation, 0.5)
+	testing.expect_value(t, animation.current_frame, 0)
+	update_animation(&animation, 0.5)
+	testing.expect_value(t, animation.current_frame, 1)
+	update_animation(&animation, 1)
+	testing.expect_value(t, animation.current_frame, 1)
 }

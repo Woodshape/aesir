@@ -69,6 +69,7 @@ main :: proc() {
 		if rl.IsKeyPressed(.F) {
 			change_animation(&player.animation, animations[.player_death])
 			player_dead = !player_dead
+			player.vel.x = 0.0
 		}
 
 		player.vel.y += GRAVITY * frame_time

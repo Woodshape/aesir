@@ -75,6 +75,8 @@ test_enemy_stuff :: proc(t: ^testing.T) {
 	// }
 	skeleton_container := new_enemy_container(skeleton)
 	defer free(skeleton_container)
+	bat_container := new_enemy_container(bat)
+	defer free(bat_container)
 
 	log.infof("%v\n", skeleton_container)
 
@@ -86,7 +88,12 @@ test_enemy_stuff :: proc(t: ^testing.T) {
 
 	myEnemyList: [dynamic]^EnemyContainer
 	append(&myEnemyList, skeleton_container)
+	append(&myEnemyList, bat_container)
 	defer delete(myEnemyList)
 
-	testing.expect(t, len(myEnemyList) == 1)
+	for enemy, i in myEnemyList {
+		log.infof("enemy %d: %v", i, enemy)
+	}
+
+	testing.expect(t, len(myEnemyList) == 2)
 }

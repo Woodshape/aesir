@@ -36,14 +36,13 @@ main :: proc() {
 
 	load_animation_data()
 
-	player_idle_animation: Animation = animations[.player_idle]
-	player_run_animation: Animation = animations[.player_run]
-
 	player: Player = {
 		hp        = 100,
 		pos       = {640, 360},
-		animation = player_idle_animation,
+		animation = animations[.player_idle],
 	}
+
+	player_dead: bool
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -52,17 +51,24 @@ main :: proc() {
 
 		input: Input = handle_input()
 
-		if input.move_left {
-			player.vel.x = -SPEED
-			player.flip_sprite = true
-			change_animation(&player.animation, player_run_animation)
-		} else if input.move_right {
-			player.vel.x = SPEED
-			player.flip_sprite = false
-			change_animation(&player.animation, player_run_animation)
-		} else {
-			player.vel.x = 0.0
-			change_animation(&player.animation, player_idle_animation)
+		if !player_dead {
+			if input.move_left {
+				player.vel.x = -SPEED
+				player.flip_sprite = true
+				change_animation(&player.animation, animations[.player_run])
+			} else if input.move_right {
+				player.vel.x = SPEED
+				player.flip_sprite = false
+				change_animation(&player.animation, animations[.player_run])
+			} else {
+				player.vel.x = 0.0
+				change_animation(&player.animation, animations[.player_idle])
+			}
+		}
+
+		if rl.IsKeyPressed(.F) {
+			change_animation(&player.animation, animations[.player_death])
+			player_dead = !player_dead
 		}
 
 		player.vel.y += GRAVITY * frame_time

@@ -9,6 +9,7 @@ import rl "vendor:raylib"
 Animations :: enum {
 	player_idle,
 	player_run,
+	player_death,
 }
 
 Sprite_Data :: struct {
@@ -19,6 +20,15 @@ Sprite_Data :: struct {
 sprite_data: [Animations]Sprite_Data = {
 	.player_idle = {frames = 2, duration = 0.3},
 	.player_run = {frames = 3, duration = 0.1},
+	.player_death = {frames = 3, duration = 0.2},
+}
+
+Animation_Data :: struct {
+	one_shot: bool,
+}
+
+animation_data: [Animations]Animation_Data = #partial {
+	.player_death = {one_shot = true},
 }
 
 animations: [Animations]Animation
@@ -33,12 +43,14 @@ load_animation_data :: proc() {
 
 		texture: rl.Texture2D = rl.LoadTexture(strings.clone_to_cstring(path))
 
-		data := sprite_data[anim]
+		sprite := sprite_data[anim]
+		data := animation_data[anim]
 
 		animations[anim] = {
 			sprite = {animation = anim, texture = texture},
-			frames = data.frames,
-			frame_length = data.duration,
+			frames = sprite.frames,
+			frame_length = sprite.duration,
+			one_shot = data.one_shot,
 		}
 
 		fmt.printf("animation added: %v %s -> %v\n", anim, path, animations[anim])
@@ -56,6 +68,7 @@ Animation :: struct {
 	current_frame: i8,
 	frame_length:  f32,
 	frame_timer:   f32,
+	one_shot:      bool,
 }
 
 update_animation :: proc(animation: ^Animation, frame_time: f32) {
@@ -65,7 +78,7 @@ update_animation :: proc(animation: ^Animation, frame_time: f32) {
 		animation.current_frame += 1
 
 		if animation.current_frame >= animation.frames {
-			animation.current_frame = 0
+			animation.current_frame = animation.one_shot ? animation.frames - 1 : 0
 		}
 	}
 }
@@ -79,6 +92,7 @@ change_animation :: proc(animation: ^Animation, new_animation: Animation) {
 	animation.sprite.texture = new_animation.sprite.texture
 	animation.frames = new_animation.frames
 	animation.frame_length = new_animation.frame_length
+	animation.one_shot = new_animation.one_shot
 
 	animation.frame_timer = 0
 	animation.current_frame = 0

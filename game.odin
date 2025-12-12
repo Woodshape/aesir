@@ -1,8 +1,9 @@
 package game
 
-import "core:log"
-import "core:testing"
 import rl "vendor:raylib"
+
+WINDOW_WIDTH :: 1280
+WINDOW_HEIGHT :: 720
 
 SPEED: f32 : 400.0
 GRAVITY: f32 : 2000.0
@@ -32,13 +33,13 @@ handle_input :: proc() -> Input {
 
 
 main :: proc() {
-	rl.InitWindow(1280, 720, "Aesir")
+	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Aesir")
 
 	load_animation_data()
 
 	player: Player = {
 		hp        = 100,
-		pos       = {640, 360},
+		pos       = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2},
 		animation = animations[.player_idle],
 	}
 
@@ -64,6 +65,8 @@ main :: proc() {
 				player.vel.x = 0.0
 				change_animation(&player.animation, animations[.player_idle])
 			}
+		} else {
+			rl.DrawText("You are Dead", WINDOW_WIDTH / 2 - 200, WINDOW_HEIGHT / 2, 50, rl.BLACK)
 		}
 
 		if rl.IsKeyPressed(.F) {

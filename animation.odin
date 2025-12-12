@@ -4,8 +4,10 @@ import "core:fmt"
 import "core:testing"
 import rl "vendor:raylib"
 
-ANIMATION_IDLE :: "cat_idle.png"
-ANIMATION_RUN :: "cat_run.png"
+RES_FOLDER :: "res/images/"
+
+ANIMATION_IDLE :: RES_FOLDER + "player_idle.png"
+ANIMATION_RUN :: RES_FOLDER + "player_run.png"
 
 Animation :: struct {
 	texture:       rl.Texture2D,

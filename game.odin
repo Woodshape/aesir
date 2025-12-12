@@ -41,7 +41,7 @@ main :: proc() {
 
 	player_run_animation: Animation = {
 		texture      = rl.LoadTexture(ANIMATION_RUN),
-		frames       = 4,
+		frames       = 3,
 		frame_length = 0.1,
 	}
 
@@ -80,7 +80,7 @@ main :: proc() {
 
 		player.pos += player.vel * frame_time
 
-		floor_pos: f32 = f32(rl.GetScreenHeight()) - 64
+		floor_pos: f32 = f32(rl.GetScreenHeight()) - 96
 		if player.pos.y > floor_pos {
 			player.pos.y = floor_pos
 			player.grounded = true

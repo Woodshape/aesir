@@ -11,25 +11,17 @@ Animations :: enum {
 	player_run,
 }
 
-player_animations: [Animations]Animation = #partial {
-	.player_idle = {},
-	.player_run = {
-		sprite = {animation = .player_run, texture = animation_data[.player_run]},
-		frames = 3,
-		frame_length = 0.1,
-	},
-}
-
 Sprite_Data :: struct {
 	frames: i8,
 	length: f32,
 }
 
-sprite_data: [Animations]Sprite_Data = #partial {
+sprite_data: [Animations]Sprite_Data = {
 	.player_idle = {frames = 2, length = 0.5},
 	.player_run = {frames = 3, length = 0.2},
 }
 
+player_animations: [Animations]Animation
 animation_data: [Animations]rl.Texture2D
 
 load_animation_data :: proc() {
@@ -42,8 +34,6 @@ load_animation_data :: proc() {
 
 		animation_data[anim] = rl.LoadTexture(strings.clone_to_cstring(path))
 
-		fmt.printf("animation added: %v %s\n", anim, path)
-
 		data := sprite_data[anim]
 
 		player_animations[anim] = {
@@ -51,6 +41,8 @@ load_animation_data :: proc() {
 			frames = data.frames,
 			frame_length = data.length,
 		}
+
+		fmt.printf("animation added: %v %s -> %v\n", anim, path, player_animations[anim])
 	}
 }
 
@@ -83,13 +75,6 @@ change_animation :: proc(animation: ^Animation, new_animation: Animation) {
 	if animation.sprite.animation == new_animation.sprite.animation {
 		return
 	}
-
-	fmt.printf(
-		"animation changed: %v -> %v %v\n",
-		animation.sprite.animation,
-		new_animation.sprite.animation,
-		new_animation.sprite.texture,
-	)
 
 	animation.sprite.animation = new_animation.sprite.animation
 	animation.sprite.texture = new_animation.sprite.texture

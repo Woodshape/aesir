@@ -36,8 +36,8 @@ main :: proc() {
 
 	load_animation_data()
 
-	player_idle_animation: Animation = player_animations[.player_idle]
-	player_run_animation: Animation = player_animations[.player_run]
+	player_idle_animation: Animation = animations[.player_idle]
+	player_run_animation: Animation = animations[.player_run]
 
 	player: Player = {
 		hp        = 100,

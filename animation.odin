@@ -12,17 +12,16 @@ Animations :: enum {
 }
 
 Sprite_Data :: struct {
-	frames: i8,
-	length: f32,
+	frames:   i8,
+	duration: f32,
 }
 
 sprite_data: [Animations]Sprite_Data = {
-	.player_idle = {frames = 2, length = 0.5},
-	.player_run = {frames = 3, length = 0.2},
+	.player_idle = {frames = 2, duration = 0.3},
+	.player_run = {frames = 3, duration = 0.1},
 }
 
-player_animations: [Animations]Animation
-animation_data: [Animations]rl.Texture2D
+animations: [Animations]Animation
 
 load_animation_data :: proc() {
 	img_dir := "res/images/"
@@ -32,17 +31,17 @@ load_animation_data :: proc() {
 		succ := os.is_file_path(path)
 		assert(succ, fmt.tprint(path, "not found"))
 
-		animation_data[anim] = rl.LoadTexture(strings.clone_to_cstring(path))
+		texture: rl.Texture2D = rl.LoadTexture(strings.clone_to_cstring(path))
 
 		data := sprite_data[anim]
 
-		player_animations[anim] = {
-			sprite = {animation = anim, texture = animation_data[anim]},
+		animations[anim] = {
+			sprite = {animation = anim, texture = texture},
 			frames = data.frames,
-			frame_length = data.length,
+			frame_length = data.duration,
 		}
 
-		fmt.printf("animation added: %v %s -> %v\n", anim, path, player_animations[anim])
+		fmt.printf("animation added: %v %s -> %v\n", anim, path, animations[anim])
 	}
 }
 

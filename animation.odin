@@ -1,26 +1,66 @@
 package game
 
+import "core:fmt"
+import "core:os"
+import "core:strings"
 import "core:testing"
 import rl "vendor:raylib"
 
-RES_FOLDER :: "res/images/"
-
 Animations :: enum {
-	Idle,
-	Run,
+	player_idle,
+	player_run,
 }
 
-Player_Animation_Filenames :: [Animations]cstring {
-	.Idle = RES_FOLDER + "player_idle.png",
-	.Run  = RES_FOLDER + "player_run.png",
+player_animations: [Animations]Animation = #partial {
+	.player_idle = {},
+	.player_run = {
+		sprite = {animation = .player_run, texture = animation_data[.player_run]},
+		frames = 3,
+		frame_length = 0.1,
+	},
 }
 
-Enemy_Animation_Filenames :: #partial [Animations]cstring {
-	.Idle = RES_FOLDER + "enemy.png",
+Sprite_Data :: struct {
+	frames: i8,
+	length: f32,
+}
+
+sprite_data: [Animations]Sprite_Data = #partial {
+	.player_idle = {frames = 2, length = 0.5},
+	.player_run = {frames = 3, length = 0.2},
+}
+
+animation_data: [Animations]rl.Texture2D
+
+load_animation_data :: proc() {
+	img_dir := "res/images/"
+
+	for anim in Animations {
+		path := fmt.tprint(img_dir, anim, ".png", sep = "")
+		succ := os.is_file_path(path)
+		assert(succ, fmt.tprint(path, "not found"))
+
+		animation_data[anim] = rl.LoadTexture(strings.clone_to_cstring(path))
+
+		fmt.printf("animation added: %v %s\n", anim, path)
+
+		data := sprite_data[anim]
+
+		player_animations[anim] = {
+			sprite = {animation = anim, texture = animation_data[anim]},
+			frames = data.frames,
+			frame_length = data.length,
+		}
+	}
+}
+
+Animation_Sprite :: struct {
+	animation: Animations,
+	texture:   rl.Texture2D,
 }
 
 Animation :: struct {
-	texture:       rl.Texture2D,
+	sprite:        Animation_Sprite,
 	frames:        i8,
 	current_frame: i8,
 	frame_length:  f32,
@@ -40,11 +80,19 @@ update_animation :: proc(animation: ^Animation, frame_time: f32) {
 }
 
 change_animation :: proc(animation: ^Animation, new_animation: Animation) {
-	if animation.texture.id == new_animation.texture.id {
+	if animation.sprite.animation == new_animation.sprite.animation {
 		return
 	}
 
-	animation.texture = new_animation.texture
+	fmt.printf(
+		"animation changed: %v -> %v %v\n",
+		animation.sprite.animation,
+		new_animation.sprite.animation,
+		new_animation.sprite.texture,
+	)
+
+	animation.sprite.animation = new_animation.sprite.animation
+	animation.sprite.texture = new_animation.sprite.texture
 	animation.frames = new_animation.frames
 	animation.frame_length = new_animation.frame_length
 
@@ -53,28 +101,35 @@ change_animation :: proc(animation: ^Animation, new_animation: Animation) {
 }
 
 draw_animation :: proc(animation: Animation, position: rl.Vector2, flip_sprite: bool) {
-	player_run_width: f32 = f32(animation.texture.width)
-	player_run_height: f32 = f32(animation.texture.height)
+	animation_width: f32 = f32(animation.sprite.texture.width)
+	animation_height: f32 = f32(animation.sprite.texture.height)
 
 	player_source: rl.Rectangle = {
-		x      = f32(animation.current_frame) * player_run_width / f32(animation.frames),
+		x      = f32(animation.current_frame) * animation_width / f32(animation.frames),
 		y      = 0,
-		width  = player_run_width / f32(animation.frames),
-		height = player_run_height,
+		width  = animation_width / f32(animation.frames),
+		height = animation_height,
 	}
 
 	player_dest: rl.Rectangle = {
 		x      = position.x,
 		y      = position.y,
-		width  = player_run_width * 4 / f32(animation.frames),
-		height = player_run_height * 4,
+		width  = animation_width * 4 / f32(animation.frames),
+		height = animation_height * 4,
 	}
 
 	if flip_sprite {
 		player_source.width = -player_source.width
 	}
 
-	rl.DrawTexturePro(animation.texture, player_source, player_dest, {}, 0, tint = rl.RAYWHITE)
+	rl.DrawTexturePro(
+		animation.sprite.texture,
+		player_source,
+		player_dest,
+		{},
+		0,
+		tint = rl.RAYWHITE,
+	)
 }
 
 @(test)

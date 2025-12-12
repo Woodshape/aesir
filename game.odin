@@ -30,20 +30,14 @@ handle_input :: proc() -> Input {
 	}
 }
 
+
 main :: proc() {
 	rl.InitWindow(1280, 720, "Aesir")
 
-	player_idle_animation: Animation = {
-		texture      = rl.LoadTexture(Player_Animation_Filenames[.Idle]),
-		frames       = 2,
-		frame_length = 0.5,
-	}
+	load_animation_data()
 
-	player_run_animation: Animation = {
-		texture      = rl.LoadTexture(Player_Animation_Filenames[.Run]),
-		frames       = 3,
-		frame_length = 0.1,
-	}
+	player_idle_animation: Animation = player_animations[.player_idle]
+	player_run_animation: Animation = player_animations[.player_run]
 
 	player: Player = {
 		hp        = 100,

@@ -48,6 +48,7 @@ load_animation_data :: proc(allocator := context.allocator) {
 		animations[anim] = {
 			name = anim,
 			sprite = {data = sprite, texture = texture},
+			frame_timer = sprite.duration,
 			one_shot = data.one_shot,
 		}
 
@@ -69,14 +70,15 @@ Animation :: struct {
 }
 
 update_animation :: proc(animation: ^Animation, frame_time: f32) {
-	animation.frame_timer += frame_time
-	for animation.frame_timer >= animation.sprite.data.duration {
-		animation.frame_timer -= animation.sprite.data.duration
+	animation.frame_timer -= frame_time
+	for animation.frame_timer <= 0 {
 		animation.current_frame += 1
 
 		if animation.current_frame >= animation.sprite.data.frames {
 			animation.current_frame = animation.one_shot ? animation.sprite.data.frames - 1 : 0
 		}
+
+		animation.frame_timer = animation.sprite.data.duration + animation.frame_timer
 	}
 }
 
@@ -85,11 +87,12 @@ change_animation :: proc(animation: ^Animation, new_animation: Animation) {
 		return
 	}
 
+
 	animation.name = new_animation.name
 	animation.sprite = new_animation.sprite
+	animation.frame_timer = new_animation.frame_timer
 	animation.one_shot = new_animation.one_shot
 
-	animation.frame_timer = 0
 	animation.current_frame = 0
 }
 

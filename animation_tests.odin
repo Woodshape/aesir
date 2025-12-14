@@ -17,8 +17,8 @@ load_test_animation_data :: proc(allocator := context.allocator) {
 		animations[anim] = {
 			name = anim,
 			sprite = {data = sprite},
+			data = data,
 			frame_timer = sprite.duration,
-			one_shot = data.one_shot,
 		}
 
 		fmt.printf("animation added: %v %s -> %v\n", anim, path, animations[anim])
@@ -56,15 +56,18 @@ test_change_animation :: proc(t: ^testing.T) {
 	load_test_animation_data(context.temp_allocator)
 
 	data: Sprite_Data = sprite_data[.player_idle]
+	anim: Animation_Data = animation_data[.player_idle]
 	animation := animations[.player_idle]
 
 	testing.expect_value(t, animation.name, Animations.player_idle)
 	testing.expect_value(t, animation.frame_timer, data.duration)
 	testing.expect_value(t, animation.sprite.data.duration, data.duration)
 	testing.expect_value(t, animation.sprite.data.frames, data.frames)
-	testing.expect_value(t, animation.one_shot, false)
+	testing.expect_value(t, animation.data.scale, anim.scale)
+	testing.expect_value(t, animation.data.one_shot, anim.one_shot)
 
 	new_data: Sprite_Data = sprite_data[.player_run]
+	new_anim: Animation_Data = animation_data[.player_idle]
 	new_animation := animations[.player_run]
 
 	change_animation(&animation, new_animation)
@@ -73,7 +76,8 @@ test_change_animation :: proc(t: ^testing.T) {
 	testing.expect_value(t, animation.frame_timer, new_data.duration)
 	testing.expect_value(t, animation.sprite.data.duration, new_data.duration)
 	testing.expect_value(t, animation.sprite.data.frames, new_data.frames)
-	testing.expect_value(t, animation.one_shot, false)
+	testing.expect_value(t, animation.data.scale, new_anim.scale)
+	testing.expect_value(t, animation.data.one_shot, new_anim.one_shot)
 }
 
 @(test)
@@ -104,8 +108,8 @@ test_update_one_shot :: proc(t: ^testing.T) {
 	}
 	animation := Animation {
 		sprite = {data = sprite_data},
+		data = {one_shot = true},
 		frame_timer = sprite_data.duration,
-		one_shot = true,
 	}
 
 	// current frame should change according to frame_length and not loop after N frames

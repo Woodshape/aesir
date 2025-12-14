@@ -23,11 +23,18 @@ sprite_data: [Animations]Sprite_Data = {
 }
 
 Animation_Data :: struct {
+	scale:    rl.Vector2,
 	one_shot: bool,
 }
 
-animation_data: [Animations]Animation_Data = #partial {
-	.player_death = {one_shot = true},
+Animation_Data_Base :: Animation_Data {
+	scale = {4, 4},
+}
+
+animation_data: [Animations]Animation_Data = {
+	.player_idle = Animation_Data_Base,
+	.player_run = Animation_Data_Base,
+	.player_death = {scale = {4, 4}, one_shot = true},
 }
 
 animations: [Animations]Animation
@@ -48,8 +55,8 @@ load_animation_data :: proc(allocator := context.allocator) {
 		animations[anim] = {
 			name = anim,
 			sprite = {data = sprite, texture = texture},
+			data = data,
 			frame_timer = sprite.duration,
-			one_shot = data.one_shot,
 		}
 
 		fmt.printf("animation added: %v %s -> %v\n", anim, path, animations[anim])
@@ -64,9 +71,9 @@ Sprite :: struct {
 Animation :: struct {
 	name:          Animations,
 	sprite:        Sprite,
+	data:          Animation_Data,
 	current_frame: i8,
 	frame_timer:   f32,
-	one_shot:      bool,
 }
 
 update_animation :: proc(animation: ^Animation, frame_time: f32) {
@@ -75,7 +82,8 @@ update_animation :: proc(animation: ^Animation, frame_time: f32) {
 		animation.current_frame += 1
 
 		if animation.current_frame >= animation.sprite.data.frames {
-			animation.current_frame = animation.one_shot ? animation.sprite.data.frames - 1 : 0
+			animation.current_frame =
+				animation.data.one_shot ? animation.sprite.data.frames - 1 : 0
 		}
 
 		animation.frame_timer = animation.sprite.data.duration + animation.frame_timer
@@ -90,30 +98,31 @@ change_animation :: proc(animation: ^Animation, new_animation: Animation) {
 
 	animation.name = new_animation.name
 	animation.sprite = new_animation.sprite
+	animation.data = new_animation.data
 	animation.frame_timer = new_animation.frame_timer
-	animation.one_shot = new_animation.one_shot
 
 	animation.current_frame = 0
 }
 
 draw_animation :: proc(animation: Animation, position: rl.Vector2, flip_sprite: bool) {
+	animation_data: Sprite_Data = animation.sprite.data
+
 	animation_width: f32 = f32(animation.sprite.texture.width)
 	animation_height: f32 = f32(animation.sprite.texture.height)
-
-	animation_data: Sprite_Data = animation.sprite.data
+	size: rl.Vector2 = {animation_width / f32(animation_data.frames), animation_height}
 
 	player_source: rl.Rectangle = {
 		x      = f32(animation.current_frame) * animation_width / f32(animation_data.frames),
 		y      = 0,
-		width  = animation_width / f32(animation_data.frames),
-		height = animation_height,
+		width  = size.x,
+		height = size.y,
 	}
 
 	player_dest: rl.Rectangle = {
 		x      = position.x,
 		y      = position.y,
-		width  = animation_width * 4 / f32(animation_data.frames),
-		height = animation_height * 4,
+		width  = size.x * animation.data.scale.x,
+		height = size.y * animation.data.scale.y,
 	}
 
 	if flip_sprite {

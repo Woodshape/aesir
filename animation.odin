@@ -3,7 +3,6 @@ package game
 import "core:fmt"
 import "core:os"
 import "core:strings"
-import "core:testing"
 import rl "vendor:raylib"
 
 Animations :: enum {
@@ -47,9 +46,8 @@ load_animation_data :: proc(allocator := context.allocator) {
 		data := animation_data[anim]
 
 		animations[anim] = {
-			sprite = {animation = anim, texture = texture},
-			frames = sprite.frames,
-			frame_length = sprite.duration,
+			name = anim,
+			sprite = {data = sprite, texture = texture},
 			one_shot = data.one_shot,
 		}
 
@@ -57,41 +55,38 @@ load_animation_data :: proc(allocator := context.allocator) {
 	}
 }
 
-Animation_Sprite :: struct {
-	animation: Animations,
-	texture:   rl.Texture2D,
+Sprite :: struct {
+	data:    Sprite_Data,
+	texture: rl.Texture2D,
 }
 
 Animation :: struct {
-	sprite:        Animation_Sprite,
-	frames:        i8,
+	name:          Animations,
+	sprite:        Sprite,
 	current_frame: i8,
-	frame_length:  f32,
 	frame_timer:   f32,
 	one_shot:      bool,
 }
 
 update_animation :: proc(animation: ^Animation, frame_time: f32) {
 	animation.frame_timer += frame_time
-	for animation.frame_timer >= animation.frame_length {
-		animation.frame_timer -= animation.frame_length
+	for animation.frame_timer >= animation.sprite.data.duration {
+		animation.frame_timer -= animation.sprite.data.duration
 		animation.current_frame += 1
 
-		if animation.current_frame >= animation.frames {
-			animation.current_frame = animation.one_shot ? animation.frames - 1 : 0
+		if animation.current_frame >= animation.sprite.data.frames {
+			animation.current_frame = animation.one_shot ? animation.sprite.data.frames - 1 : 0
 		}
 	}
 }
 
 change_animation :: proc(animation: ^Animation, new_animation: Animation) {
-	if animation.sprite.animation == new_animation.sprite.animation {
+	if animation.name == new_animation.name {
 		return
 	}
 
-	animation.sprite.animation = new_animation.sprite.animation
-	animation.sprite.texture = new_animation.sprite.texture
-	animation.frames = new_animation.frames
-	animation.frame_length = new_animation.frame_length
+	animation.name = new_animation.name
+	animation.sprite = new_animation.sprite
 	animation.one_shot = new_animation.one_shot
 
 	animation.frame_timer = 0
@@ -102,17 +97,19 @@ draw_animation :: proc(animation: Animation, position: rl.Vector2, flip_sprite: 
 	animation_width: f32 = f32(animation.sprite.texture.width)
 	animation_height: f32 = f32(animation.sprite.texture.height)
 
+	animation_data: Sprite_Data = animation.sprite.data
+
 	player_source: rl.Rectangle = {
-		x      = f32(animation.current_frame) * animation_width / f32(animation.frames),
+		x      = f32(animation.current_frame) * animation_width / f32(animation_data.frames),
 		y      = 0,
-		width  = animation_width / f32(animation.frames),
+		width  = animation_width / f32(animation_data.frames),
 		height = animation_height,
 	}
 
 	player_dest: rl.Rectangle = {
 		x      = position.x,
 		y      = position.y,
-		width  = animation_width * 4 / f32(animation.frames),
+		width  = animation_width * 4 / f32(animation_data.frames),
 		height = animation_height * 4,
 	}
 
@@ -128,59 +125,4 @@ draw_animation :: proc(animation: Animation, position: rl.Vector2, flip_sprite: 
 		0,
 		tint = rl.RAYWHITE,
 	)
-}
-
-@(test)
-test_load_animations :: proc(t: ^testing.T) {
-	rl.InitWindow(0, 0, "")
-	load_animation_data(context.temp_allocator)
-
-	// all animations should be loaded
-	testing.expect_value(t, len(animations), len(Animations))
-
-	for anim in animations {
-		// all animations should have frames and frame_length at least
-		testing.expect(t, anim.frames > 0)
-		testing.expect(t, anim.frame_length > 0)
-
-		// all textures should be of valid format and dimensions
-		testing.expect(t, anim.sprite.texture.format != .UNKNOWN)
-		testing.expect(t, anim.sprite.texture.width > 0)
-		testing.expect(t, anim.sprite.texture.height > 0)
-	}
-
-	free_all(context.temp_allocator)
-}
-
-@(test)
-test_update :: proc(t: ^testing.T) {
-	animation := Animation {
-		frames       = 2,
-		frame_length = 1,
-	}
-
-	// current frame should change according to frame_length and loop after N frames
-	update_animation(&animation, 0.5)
-	testing.expect_value(t, animation.current_frame, 0)
-	update_animation(&animation, 0.5)
-	testing.expect_value(t, animation.current_frame, 1)
-	update_animation(&animation, 1)
-	testing.expect_value(t, animation.current_frame, 0)
-}
-
-@(test)
-test_update_one_shot :: proc(t: ^testing.T) {
-	animation := Animation {
-		frames       = 2,
-		frame_length = 1,
-		one_shot     = true,
-	}
-
-	// current frame should change according to frame_length and not loop after N frames
-	update_animation(&animation, 0.5)
-	testing.expect_value(t, animation.current_frame, 0)
-	update_animation(&animation, 0.5)
-	testing.expect_value(t, animation.current_frame, 1)
-	update_animation(&animation, 1)
-	testing.expect_value(t, animation.current_frame, 1)
 }

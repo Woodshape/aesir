@@ -41,7 +41,9 @@ main :: proc() {
 			// Check for bad frees here
 			if len(track.bad_free_array) > 0 {
 				// ... reporting bad frees ...
-				fmt.printf("bad cache hit !!!\n")
+				for a in track.bad_free_array {
+					fmt.printf("bad cache free: %v !!!\n", a)
+				}
 			}
 			mem.tracking_allocator_destroy(&track)
 		}

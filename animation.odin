@@ -76,25 +76,31 @@ Animation :: struct {
 	frame_timer:   f32,
 }
 
-update_animation :: proc(animation: ^Animation, frame_time: f32) {
+update_animation :: proc(animation: ^Animation, frame_time: f32) -> bool {
+	loop := false
+
+	frames := animation.sprite.data.frames
+	frame_len := animation.sprite.data.duration
+
 	animation.frame_timer -= frame_time
 	for animation.frame_timer <= 0 {
 		animation.current_frame += 1
 
-		if animation.current_frame >= animation.sprite.data.frames {
-			animation.current_frame =
-				animation.data.one_shot ? animation.sprite.data.frames - 1 : 0
+		if animation.current_frame >= frames {
+			animation.current_frame = animation.data.one_shot ? frames - 1 : 0
+			loop = true
 		}
 
-		animation.frame_timer = animation.sprite.data.duration + animation.frame_timer
+		animation.frame_timer = frame_len + animation.frame_timer
 	}
+
+	return loop
 }
 
-change_animation :: proc(animation: ^Animation, new_animation: Animation) {
+change_animation :: proc(animation: ^Animation, new_animation: Animation) -> bool {
 	if animation.name == new_animation.name {
-		return
+		return false
 	}
-
 
 	animation.name = new_animation.name
 	animation.sprite = new_animation.sprite
@@ -102,6 +108,7 @@ change_animation :: proc(animation: ^Animation, new_animation: Animation) {
 	animation.frame_timer = new_animation.frame_timer
 
 	animation.current_frame = 0
+	return true
 }
 
 draw_animation :: proc(animation: Animation, position: rl.Vector2, flip_sprite: bool) {

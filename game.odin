@@ -33,6 +33,20 @@ handle_input :: proc() -> Input {
 
 
 main :: proc() {
+	when ODIN_DEBUG {
+		track: mem.Tracking_Allocator
+		mem.tracking_allocator_init(&track, context.allocator)
+		context.allocator = mem.tracking_allocator(&track)
+		defer {
+			// Check for bad frees here
+			if len(track.bad_free_array) > 0 {
+				// ... reporting bad frees ...
+				fmt.printf("bad cache hit !!!\n")
+			}
+			mem.tracking_allocator_destroy(&track)
+		}
+	}
+
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Aesir")
 
 	load_animation_data()

@@ -1,37 +1,30 @@
 package game
 
+import "base:runtime"
 import "core:fmt"
 import "core:log"
 import "core:testing"
 import rl "vendor:raylib"
 
-load_test_animation_data :: proc(allocator := context.allocator) {
-	img_dir := "res/images/"
+@(init)
+init :: proc "contextless" () {
+	rl.InitWindow(0, 0, "Test Window")
 
-	for anim in Animations {
-		path := fmt.tprint(img_dir, anim, ".png", sep = "")
+	context = runtime.default_context()
+	load_animation_data(context.temp_allocator)
+}
 
-		sprite := sprite_data[anim]
-		data := animation_data[anim]
+@(fini)
+fini :: proc "contextless" () {
+	rl.CloseWindow()
 
-		animations[anim] = {
-			name = anim,
-			sprite = {data = sprite},
-			data = data,
-			frame_timer = sprite.duration,
-		}
 
-		fmt.printf("animation added: %v %s -> %v\n", anim, path, animations[anim])
-	}
+	context = runtime.default_context()
+	free_all(context.temp_allocator)
 }
 
 @(test)
 test_load_animations :: proc(t: ^testing.T) {
-	rl.InitWindow(0, 0, "TestWindow")
-	defer rl.CloseWindow()
-
-	load_animation_data(context.temp_allocator)
-
 	// all animations should be loaded
 	testing.expect_value(t, len(animations), len(Animations))
 
@@ -53,7 +46,7 @@ test_load_animations :: proc(t: ^testing.T) {
 
 @(test)
 test_change_animation :: proc(t: ^testing.T) {
-	load_test_animation_data(context.temp_allocator)
+	// load_test_animation_data(context.temp_allocator)
 
 	data: Sprite_Data = sprite_data[.player_idle]
 	anim: Animation_Data = animation_data[.player_idle]

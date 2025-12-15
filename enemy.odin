@@ -1,5 +1,6 @@
 package game
 
+import "core:fmt"
 import "core:log"
 import "core:testing"
 
@@ -55,6 +56,31 @@ new_enemy_container :: proc(enemy: EnemyVariant) -> ^EnemyContainer {
 	e := new(EnemyContainer)
 	e.variant = enemy
 	return e
+}
+
+// your default procedure
+testProc :: proc() {
+	fmt.println("testProc called")
+}
+
+// dynamic procedure
+testProcWithParam :: proc(t: $T) {
+	fmt.printfln("testProcWithParam called: %v", t)
+}
+
+// uuuuh, procedure groups, nifty
+myProc :: proc {
+	testProc,
+	testProcWithParam,
+}
+
+@(test)
+test_proc_groups :: proc(t: ^testing.T) {
+	myProc()
+	myProc("test")
+	if false {
+		testing.fail(t)
+	}
 }
 
 @(test)

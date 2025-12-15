@@ -42,6 +42,8 @@ animations: [Animations]Animation
 load_animation_data :: proc(allocator := context.allocator) {
 	img_dir := "res/images/"
 
+	fmt.printf("setting up animations")
+
 	for anim in Animations {
 		path := fmt.tprint(img_dir, anim, ".png", sep = "")
 		succ := os.is_file_path(path)

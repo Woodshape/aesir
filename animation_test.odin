@@ -1,3 +1,4 @@
+#+test
 package game
 
 import "base:runtime"

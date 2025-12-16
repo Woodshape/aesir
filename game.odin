@@ -1,5 +1,6 @@
 package game
 
+import "core:fmt"
 import "core:log"
 import "core:mem"
 import "core:testing"
@@ -11,6 +12,24 @@ WINDOW_HEIGHT :: 720
 JUMP_FORCE: f32 = 600.0
 SPEED: f32 : 400.0
 GRAVITY: f32 : 2000.0
+
+TICK_TIME: f64 = 1.0
+
+Game_State :: struct {
+	ticks:        u64,
+	time_elapsed: f64,
+	player:       ^Player,
+	scratch:      struct {
+		all_enemies: []EnemyContainer,
+	},
+}
+
+Context :: struct {
+	state:   ^Game_State,
+	delta_t: f32,
+}
+
+ctx: ^Context
 
 Player :: struct {
 	hp:          i32,
@@ -56,6 +75,8 @@ main :: proc() {
 		}
 	}
 
+	ctx = new(Context)
+
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Aesir")
 
 	load_animation_data()
@@ -67,13 +88,23 @@ main :: proc() {
 		animation = animations[.player_idle],
 	}
 
+	state: ^Game_State = new(Game_State)
+	state.player = &player
+	ctx.state = state
+
 	player_dead: bool
 	jumps: u8
 
 	for !rl.WindowShouldClose() {
+		// clear scratch
+		ctx.state.scratch = {}
+
 		rl.BeginDrawing()
 
-		frame_time: f32 = rl.GetFrameTime()
+		// ctx update
+		ctx.delta_t = rl.GetFrameTime()
+		ctx.state.time_elapsed += f64(ctx.delta_t)
+		ctx.state.ticks = u64(ctx.state.time_elapsed / TICK_TIME)
 
 		input: Input = handle_input()
 
@@ -100,7 +131,7 @@ main :: proc() {
 			player.vel.x = 0.0
 		}
 
-		player.vel.y += GRAVITY * frame_time
+		player.vel.y += GRAVITY * ctx.delta_t
 
 		if input.jump && can_jump(player, jumps) {
 			player.vel.y = -JUMP_FORCE
@@ -108,7 +139,7 @@ main :: proc() {
 			jumps += 1
 		}
 
-		player.pos += player.vel * frame_time
+		player.pos += player.vel * ctx.delta_t
 
 		floor_pos: f32 = f32(rl.GetScreenHeight()) - 96
 		if player.pos.y > floor_pos {
@@ -117,13 +148,19 @@ main :: proc() {
 			jumps = 0
 		}
 
-		update_animation(&player.animation, frame_time)
+		update_animation(&player.animation, ctx.delta_t)
 
 		rl.ClearBackground(rl.SKYBLUE)
 
 		draw_animation(player.animation, player.pos, player.flip_sprite)
 
 		rl.EndDrawing()
+
+		rl.DrawText(fmt.caprintf("delta: %.6f", ctx.delta_t), 10, 10, 20, rl.BLACK)
+		rl.DrawText(fmt.caprintf("elapsed: %.2f", ctx.state.time_elapsed), 10, 30, 20, rl.BLACK)
+		rl.DrawText(fmt.caprintf("ticks: %d", ctx.state.ticks), 10, 50, 20, rl.BLACK)
+
+		free_all(context.temp_allocator)
 	}
 
 	rl.CloseWindow()

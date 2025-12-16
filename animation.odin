@@ -27,14 +27,16 @@ Animation_Data :: struct {
 	one_shot: bool,
 }
 
+ANIMATION_SCALE :: rl.Vector2{4, 4}
+
 Animation_Data_Base :: Animation_Data {
-	scale = {4, 4},
+	scale = ANIMATION_SCALE,
 }
 
 animation_data: [Animations]Animation_Data = {
 	.player_idle = Animation_Data_Base,
 	.player_run = Animation_Data_Base,
-	.player_death = {scale = {4, 4}, one_shot = true},
+	.player_death = {scale = ANIMATION_SCALE, one_shot = true},
 }
 
 animations: [Animations]Animation

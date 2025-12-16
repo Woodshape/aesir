@@ -15,12 +15,22 @@ GRAVITY: f32 : 2000.0
 
 TICK_TIME: f64 = 1.0
 
+MAX_ENTITIES :: 2048 // increase this as needed.
+
 Game_State :: struct {
-	ticks:        u64,
-	time_elapsed: f64,
-	player:       ^Player,
-	scratch:      struct {
-		all_enemies: []EnemyContainer,
+	ticks:            u64,
+	time_elapsed:     f64,
+
+	// entity system
+	entity_top_count: int,
+	latest_entity_id: int,
+	entities:         [MAX_ENTITIES]Entity,
+	entity_free_list: [dynamic]int,
+
+	// player stuff
+	player_handle:    Entity_Handle,
+	scratch:          struct {
+		all_enemies: []Entity_Handle,
 	},
 }
 
@@ -32,13 +42,12 @@ Context :: struct {
 ctx: ^Context
 
 Player :: struct {
-	hp:          i32,
-	pos:         rl.Vector2,
-	vel:         rl.Vector2,
-	jumps:       u8,
-	animation:   Animation,
-	grounded:    bool,
-	flip_sprite: bool,
+	using entity: Entity,
+	hp:           i32,
+	vel:          rl.Vector2,
+	jumps:        u8,
+	animation:    Animation,
+	grounded:     bool,
 }
 
 Input :: struct {
@@ -66,8 +75,8 @@ main :: proc() {
 		mem.tracking_allocator_init(&track, context.allocator)
 		context.allocator = mem.tracking_allocator(&track)
 		defer {
-			if (len(track.allocation_map()) > 0) {
-				for i, entry in track.allocation_map() {
+			if (len(track.allocation_map) > 0) {
+				for i, entry in track.allocation_map {
 					fmt.printf("%v leaked %d bytes!\n", entry.location, entry.size)
 				}
 			}
@@ -89,7 +98,6 @@ main :: proc() {
 	}
 
 	state: ^Game_State = new(Game_State)
-	state.player = &player
 	ctx.state = state
 
 	player_dead: bool
@@ -106,16 +114,25 @@ main :: proc() {
 		ctx.state.time_elapsed += f64(ctx.delta_t)
 		ctx.state.ticks = u64(ctx.state.time_elapsed / TICK_TIME)
 
+		// create player handle on the first tick
+		if ctx.state.ticks == 0 && ctx.state.player_handle.id == 0 {
+			player := entity_create(.player)
+			ctx.state.player_handle = player.handle
+			fmt.printf("player handle: %v", ctx.state.player_handle)
+		}
+
+		fmt.printf("player: %v\n", get_player())
+
 		input: Input = handle_input()
 
 		if !player_dead {
 			if input.move_left {
 				player.vel.x = -SPEED
-				player.flip_sprite = true
+				player.flip_x = true
 				change_animation(&player.animation, animations[.player_run])
 			} else if input.move_right {
 				player.vel.x = SPEED
-				player.flip_sprite = false
+				player.flip_x = false
 				change_animation(&player.animation, animations[.player_run])
 			} else {
 				player.vel.x = 0.0
@@ -152,7 +169,7 @@ main :: proc() {
 
 		rl.ClearBackground(rl.SKYBLUE)
 
-		draw_animation(player.animation, player.pos, player.flip_sprite)
+		draw_animation(player.animation, player.pos, player.flip_x)
 
 		rl.EndDrawing()
 
@@ -164,6 +181,56 @@ main :: proc() {
 	}
 
 	rl.CloseWindow()
+}
+
+entity_create :: proc(kind: Entity_Kind) -> ^Entity {
+	index := -1
+	if len(ctx.state.entity_free_list) > 0 {
+		index = pop(&ctx.state.entity_free_list)
+	}
+
+	if index == -1 {
+		assert(ctx.state.entity_top_count + 1 < MAX_ENTITIES, "ran out of entities, increase size")
+		ctx.state.entity_top_count += 1
+		index = ctx.state.entity_top_count
+	}
+
+	ent := &ctx.state.entities[index]
+	ent.handle.index = index
+	ent.handle.id = ctx.state.latest_entity_id + 1
+	ctx.state.latest_entity_id = ent.handle.id
+
+	entity_setup(ent, kind)
+	fmt.assertf(ent.kind != nil, "entity %v needs to define a kind during setup", kind)
+
+	return ent
+}
+
+entity_setup :: proc(entity: ^Entity, kind: Entity_Kind) {
+	switch kind {
+	case .nil:
+	case .player:
+		setup_player(entity)
+	case .enemy:
+		setup_enemy(entity)
+	}
+}
+
+setup_player :: proc(player: ^Entity) {
+	player.kind = .player
+
+	player.update_proc = update_player
+}
+
+setup_enemy :: proc(enemy: ^Entity) {
+
+}
+
+update_player :: proc(e: ^Entity) {
+}
+
+get_player :: proc() -> ^Entity {
+	return entity_from_handle(ctx.state.player_handle)
 }
 
 @(test)

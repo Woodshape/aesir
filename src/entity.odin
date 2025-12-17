@@ -25,20 +25,25 @@ Entity_Handle :: struct {
 }
 
 Entity :: struct {
-	allocated: bool,
+	allocated:   bool,
 
 	// structs
-	handle:    Entity_Handle,
-	kind:      Entity_Kind,
-	variant:   Entity_Variant,
+	handle:      Entity_Handle,
+	kind:        Entity_Kind,
+	variant:     Entity_Variant,
+
+	// callbacks
+	update_proc: proc(_: ^Entity),
+	draw_proc:   proc(_: Entity),
+	delete_proc: proc(_: Entity_Variant),
 
 	// big sloppy entity state dump.
 	// add whatever you need in here.
-	pos:       rl.Vector2,
-	flip_x:    bool,
+	pos:         rl.Vector2,
+	flip_x:      bool,
 
 	// this gets zeroed every frame. Useful for passing data to other systems.
-	scratch:   struct{},
+	scratch:     struct{},
 }
 
 get_player :: proc() -> ^Player {
@@ -90,6 +95,13 @@ setup_player :: proc(e: ^Entity) {
 	ctx.state.player_handle = e.handle
 
 	player: ^Player = new(Player)
+
+	e.delete_proc = proc(variant: Entity_Variant) {
+		#partial switch var in variant {
+		case ^Player:
+			free(var)
+		}
+	}
 
 	e.variant = player
 }

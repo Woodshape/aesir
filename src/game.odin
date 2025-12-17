@@ -111,7 +111,7 @@ main :: proc() {
 
 	player_entity: ^Entity = entity_create(.player)
 	player := get_player()
-	defer free(player)
+	defer player_entity.delete_proc(player)
 	player.jumps = 2
 
 	player_dead: bool

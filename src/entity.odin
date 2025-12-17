@@ -4,12 +4,16 @@ import rl "vendor:raylib"
 
 zero_entity: Entity // #readonlytodo
 
+Entity_Variant :: union {
+	^Player,
+	^Enemy,
+}
+
 Entity_Kind :: enum {
 	nil,
 	player,
 	enemy,
 }
-
 
 Entity_Handle :: struct {
 	index: int,
@@ -19,6 +23,7 @@ Entity_Handle :: struct {
 Entity :: struct {
 	handle:      Entity_Handle,
 	kind:        Entity_Kind,
+	variant:     Entity_Variant,
 
 	// todo, move this into static entity data
 	update_proc: proc(_: ^Entity),

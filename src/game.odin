@@ -90,15 +90,12 @@ main :: proc() {
 
 	load_animation_data()
 
-	player: Player = {
-		hp        = 100,
-		pos       = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2},
-		jumps     = 2,
-		animation = animations[.player_idle],
-	}
-
 	state: ^Game_State = new(Game_State)
 	ctx.state = state
+
+	// create player handle on the first tick
+	player_entity: ^Entity = new(Entity)
+	player: Player = setup_player(player_entity)
 
 	player_dead: bool
 	jumps: u8
@@ -114,14 +111,6 @@ main :: proc() {
 		ctx.state.time_elapsed += f64(ctx.delta_t)
 		ctx.state.ticks = u64(ctx.state.time_elapsed / TICK_TIME)
 
-		// create player handle on the first tick
-		if ctx.state.ticks == 0 && ctx.state.player_handle.id == 0 {
-			player := entity_create(.player)
-			ctx.state.player_handle = player.handle
-			fmt.printf("player handle: %v", ctx.state.player_handle)
-		}
-
-		fmt.printf("player: %v\n", get_player())
 
 		input: Input = handle_input()
 
@@ -183,54 +172,19 @@ main :: proc() {
 	rl.CloseWindow()
 }
 
-entity_create :: proc(kind: Entity_Kind) -> ^Entity {
-	index := -1
-	if len(ctx.state.entity_free_list) > 0 {
-		index = pop(&ctx.state.entity_free_list)
+setup_player :: proc(entity: ^Entity) -> Player {
+	entity.kind = .player
+
+	player: Player = {
+		hp        = 100,
+		pos       = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2},
+		jumps     = 2,
+		animation = animations[.player_idle],
 	}
 
-	if index == -1 {
-		assert(ctx.state.entity_top_count + 1 < MAX_ENTITIES, "ran out of entities, increase size")
-		ctx.state.entity_top_count += 1
-		index = ctx.state.entity_top_count
-	}
+	entity.variant = &player
 
-	ent := &ctx.state.entities[index]
-	ent.handle.index = index
-	ent.handle.id = ctx.state.latest_entity_id + 1
-	ctx.state.latest_entity_id = ent.handle.id
-
-	entity_setup(ent, kind)
-	fmt.assertf(ent.kind != nil, "entity %v needs to define a kind during setup", kind)
-
-	return ent
-}
-
-entity_setup :: proc(entity: ^Entity, kind: Entity_Kind) {
-	switch kind {
-	case .nil:
-	case .player:
-		setup_player(entity)
-	case .enemy:
-		setup_enemy(entity)
-	}
-}
-
-setup_player :: proc(player: ^Entity) {
-	player.kind = .player
-
-	player.update_proc = update_player
-}
-
-setup_enemy :: proc(enemy: ^Entity) {
-
-}
-
-update_player :: proc(e: ^Entity) {
-}
-
-get_player :: proc() -> ^Entity {
-	return entity_from_handle(ctx.state.player_handle)
+	return player
 }
 
 @(test)

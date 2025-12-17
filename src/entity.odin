@@ -5,6 +5,7 @@ import "core:log"
 import "core:testing"
 import rl "vendor:raylib"
 
+@(rodata)
 zero_entity: Entity = {} //readonlytodo
 
 Entity_Variant :: union {
@@ -24,24 +25,20 @@ Entity_Handle :: struct {
 }
 
 Entity :: struct {
-	allocated:   bool,
+	allocated: bool,
 
 	// structs
-	handle:      Entity_Handle,
-	kind:        Entity_Kind,
-	variant:     Entity_Variant,
-
-	// todo, move this into static entity data
-	update_proc: proc(_: ^Entity),
-	draw_proc:   proc(_: Entity),
+	handle:    Entity_Handle,
+	kind:      Entity_Kind,
+	variant:   Entity_Variant,
 
 	// big sloppy entity state dump.
 	// add whatever you need in here.
-	pos:         rl.Vector2,
-	flip_x:      bool,
+	pos:       rl.Vector2,
+	flip_x:    bool,
 
 	// this gets zeroed every frame. Useful for passing data to other systems.
-	scratch:     struct{},
+	scratch:   struct{},
 }
 
 get_player :: proc() -> ^Entity {
@@ -68,38 +65,29 @@ entity_is_valid_ptr :: proc(entity: ^Entity) -> bool {
 entity_init_core :: proc() {
 	// make sure the zero entity has good defaults, so we don't crash on stuff like functions pointers
 	fmt.assertf(zero_entity.kind == .none, "zero entity kind invalid: %v", zero_entity.kind)
-	entity_setup(&zero_entity, .none)
+	entity_setup(&zero_entity, nil)
 }
 
-entity_setup :: proc(e: ^Entity, kind: Entity_Kind) {
-	switch kind {
-	case .none:
-	case .player:
-		setup_player(e)
-	case .enemy:
-		setup_enemy(e)
+entity_setup :: proc(e: ^Entity, variant: Entity_Variant) {
+	switch entity_variant in variant {
+	case nil:
+	case ^Player:
+		setup_player(e, entity_variant)
+	case ^Enemy:
+		setup_enemy(e, entity_variant)
 	}
 }
 
-setup_player :: proc(e: ^Entity) {
+setup_player :: proc(e: ^Entity, variant: ^Player) {
 	e.kind = .player
+	e.variant = variant
 
 	ctx.state.player_handle = e.handle
-
-	player: ^Player = new(Player)
-	player.hp = 100
-	player.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
-	player.jumps = 2
-	player.animation = animations[.player_idle]
-
-	e.variant = player
-
-	e.update_proc = proc(e: ^Entity) {}
-	e.draw_proc = proc(e: Entity) {}
 }
 
-setup_enemy :: proc(e: ^Entity) {
+setup_enemy :: proc(e: ^Entity, variant: ^Enemy) {
 	e.kind = .enemy
+	e.variant = variant
 }
 
 entity_from_handle :: proc(handle: Entity_Handle) -> (entity: ^Entity, ok: bool) #optional_ok {
@@ -115,7 +103,7 @@ entity_from_handle :: proc(handle: Entity_Handle) -> (entity: ^Entity, ok: bool)
 	return ent, true
 }
 
-entity_create :: proc(kind: Entity_Kind) -> ^Entity {
+entity_create :: proc(variant: Entity_Variant) -> ^Entity {
 	index := -1
 	if len(ctx.state.entity_free_list) > 0 {
 		index = pop(&ctx.state.entity_free_list)
@@ -134,8 +122,8 @@ entity_create :: proc(kind: Entity_Kind) -> ^Entity {
 	ent.handle.id = ctx.state.latest_entity_id + 1
 	ctx.state.latest_entity_id = ent.handle.id
 
-	entity_setup(ent, kind)
-	fmt.assertf(ent.kind != nil, "entity %v needs to define a kind during setup", kind)
+	entity_setup(ent, variant)
+	fmt.assertf(ent.kind != nil, "entity %v needs to define a kind during setup", variant)
 
 	ent.allocated = true
 
@@ -163,7 +151,15 @@ test_entity_create :: proc(t: ^testing.T) {
 	testing.expect_value(t, ctx.state.entities[0].allocated, false)
 	testing.expect_value(t, ctx.state.entities[1].allocated, false)
 
-	ent := entity_create(.player)
+	player: ^Player = new(Player)
+	player.hp = 100
+	player.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
+	player.jumps = 2
+	player.animation = animations[.player_idle]
+
+	ent := entity_create(player)
+	defer free(player)
+
 	ent.pos = rl.Vector2{1, 1}
 	testing.expect_value(t, ent.handle.index, 1)
 	testing.expect_value(t, ent.handle.id, 1)
@@ -174,7 +170,7 @@ test_entity_create :: proc(t: ^testing.T) {
 	testing.expect(t, ent.variant != nil)
 	#partial switch variant in ent.variant {
 	case ^Player:
-		defer free(variant)
+		// defer free(variant)
 
 		testing.expect_value(t, variant.hp, 100)
 		testing.expect_value(t, variant.jumps, 2)

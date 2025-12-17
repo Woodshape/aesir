@@ -41,8 +41,14 @@ Entity :: struct {
 	scratch:   struct{},
 }
 
-get_player :: proc() -> ^Entity {
-	return entity_from_handle(ctx.state.player_handle)
+get_player :: proc() -> ^Player {
+	player_handle := entity_from_handle(ctx.state.player_handle)
+	#partial switch variant in player_handle.variant {
+	case ^Player:
+		return variant
+	case:
+		panic("player variant not accessable from handle")
+	}
 }
 
 get_all_ents :: proc() -> []Entity_Handle {
@@ -68,26 +74,28 @@ entity_init_core :: proc() {
 	entity_setup(&zero_entity, nil)
 }
 
-entity_setup :: proc(e: ^Entity, variant: Entity_Variant) {
-	switch entity_variant in variant {
-	case nil:
-	case ^Player:
-		setup_player(e, entity_variant)
-	case ^Enemy:
-		setup_enemy(e, entity_variant)
+entity_setup :: proc(e: ^Entity, kind: Entity_Kind) {
+	switch kind {
+	case .none:
+	case .player:
+		setup_player(e)
+	case .enemy:
+		setup_enemy(e)
 	}
 }
 
-setup_player :: proc(e: ^Entity, variant: ^Player) {
+setup_player :: proc(e: ^Entity) {
 	e.kind = .player
-	e.variant = variant
 
 	ctx.state.player_handle = e.handle
+
+	player: ^Player = new(Player)
+
+	e.variant = player
 }
 
-setup_enemy :: proc(e: ^Entity, variant: ^Enemy) {
+setup_enemy :: proc(e: ^Entity) {
 	e.kind = .enemy
-	e.variant = variant
 }
 
 entity_from_handle :: proc(handle: Entity_Handle) -> (entity: ^Entity, ok: bool) #optional_ok {
@@ -103,7 +111,7 @@ entity_from_handle :: proc(handle: Entity_Handle) -> (entity: ^Entity, ok: bool)
 	return ent, true
 }
 
-entity_create :: proc(variant: Entity_Variant) -> ^Entity {
+entity_create :: proc(kind: Entity_Kind) -> ^Entity {
 	index := -1
 	if len(ctx.state.entity_free_list) > 0 {
 		index = pop(&ctx.state.entity_free_list)
@@ -122,8 +130,8 @@ entity_create :: proc(variant: Entity_Variant) -> ^Entity {
 	ent.handle.id = ctx.state.latest_entity_id + 1
 	ctx.state.latest_entity_id = ent.handle.id
 
-	entity_setup(ent, variant)
-	fmt.assertf(ent.kind != nil, "entity %v needs to define a kind during setup", variant)
+	entity_setup(ent, kind)
+	fmt.assertf(ent.kind != nil, "entity %v needs to define a kind during setup", kind)
 
 	ent.allocated = true
 
@@ -151,14 +159,20 @@ test_entity_create :: proc(t: ^testing.T) {
 	testing.expect_value(t, ctx.state.entities[0].allocated, false)
 	testing.expect_value(t, ctx.state.entities[1].allocated, false)
 
-	player: ^Player = new(Player)
-	player.hp = 100
-	player.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
-	player.jumps = 2
-	player.animation = animations[.player_idle]
 
-	ent := entity_create(player)
-	defer free(player)
+	ent := entity_create(.player)
+	#partial switch variant in ent.variant {
+	case ^Player:
+		defer free(variant)
+		variant.hp = 100
+		variant.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
+		variant.jumps = 2
+		variant.animation = animations[.player_idle]
+
+		testing.expect_value(t, variant.hp, 100)
+		testing.expect_value(t, variant.jumps, 2)
+		testing.expect_value(t, variant.animation, animations[.player_idle])
+	}
 
 	ent.pos = rl.Vector2{1, 1}
 	testing.expect_value(t, ent.handle.index, 1)
@@ -168,14 +182,6 @@ test_entity_create :: proc(t: ^testing.T) {
 	testing.expect_value(t, ctx.state.entities[ent.handle.index], ent^)
 
 	testing.expect(t, ent.variant != nil)
-	#partial switch variant in ent.variant {
-	case ^Player:
-		// defer free(variant)
-
-		testing.expect_value(t, variant.hp, 100)
-		testing.expect_value(t, variant.jumps, 2)
-		testing.expect_value(t, variant.animation, animations[.player_idle])
-	}
 
 	testing.expect_value(t, ctx.state.entities[0].allocated, false)
 	testing.expect_value(t, ctx.state.entities[1].allocated, true)

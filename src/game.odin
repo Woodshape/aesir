@@ -69,8 +69,6 @@ handle_input :: proc() -> Input {
 	}
 }
 
-player: Player
-
 main :: proc() {
 	context.logger = log.create_console_logger()
 	when ODIN_DEBUG {
@@ -111,15 +109,10 @@ main :: proc() {
 	entity_init_core()
 	load_animation_data()
 
-	p := new(Player)
-	defer free(p)
-	p.hp = 100
-	p.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
-	p.jumps = 2
-	p.animation = animations[.player_idle]
-
-	player = p^
-	// defer free(&player)
+	player_entity: ^Entity = entity_create(.player)
+	player := get_player()
+	defer free(player)
+	player.jumps = 2
 
 	player_dead: bool
 	jumps: u8
@@ -162,7 +155,7 @@ main :: proc() {
 
 		player.vel.y += GRAVITY * ctx.delta_t
 
-		if input.jump && can_jump(player, jumps) {
+		if input.jump && can_jump(player^, jumps) {
 			player.vel.y = -JUMP_FORCE
 			player.grounded = false
 			jumps += 1

@@ -30,7 +30,7 @@ Game_State :: struct {
 	// player stuff
 	player_handle:    Entity_Handle,
 	scratch:          struct {
-		all_enemies: []Entity_Handle,
+		all_entities: []Entity_Handle,
 	},
 }
 
@@ -84,18 +84,21 @@ main :: proc() {
 		}
 	}
 
-	ctx = new(Context)
-
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Aesir")
 
-	load_animation_data()
-
+	ctx = new(Context)
 	state: ^Game_State = new(Game_State)
 	ctx.state = state
 
-	// create player handle on the first tick
-	player_entity: ^Entity = new(Entity)
-	player: Player = setup_player(player_entity)
+	entity_init_core()
+	load_animation_data()
+
+	player: Player = {
+		hp        = 100,
+		pos       = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2},
+		jumps     = 2,
+		animation = animations[.player_idle],
+	}
 
 	player_dead: bool
 	jumps: u8
@@ -110,7 +113,6 @@ main :: proc() {
 		ctx.delta_t = rl.GetFrameTime()
 		ctx.state.time_elapsed += f64(ctx.delta_t)
 		ctx.state.ticks = u64(ctx.state.time_elapsed / TICK_TIME)
-
 
 		input: Input = handle_input()
 
@@ -170,21 +172,6 @@ main :: proc() {
 	}
 
 	rl.CloseWindow()
-}
-
-setup_player :: proc(entity: ^Entity) -> Player {
-	entity.kind = .player
-
-	player: Player = {
-		hp        = 100,
-		pos       = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2},
-		jumps     = 2,
-		animation = animations[.player_idle],
-	}
-
-	entity.variant = &player
-
-	return player
 }
 
 @(test)

@@ -3,6 +3,7 @@ package game
 import "core:fmt"
 import "core:log"
 import "core:mem"
+import "core:strings"
 import "core:testing"
 import rl "vendor:raylib"
 
@@ -68,6 +69,8 @@ handle_input :: proc() -> Input {
 	}
 }
 
+player: Player
+
 main :: proc() {
 	context.logger = log.create_console_logger()
 	when ODIN_DEBUG {
@@ -75,11 +78,24 @@ main :: proc() {
 		mem.tracking_allocator_init(&track, context.allocator)
 		context.allocator = mem.tracking_allocator(&track)
 		defer {
+			// Check for allocations that were never freed (leaks)
 			if len(track.allocation_map) > 0 {
-				for i, entry in track.allocation_map {
-					fmt.printf("%v leaked %d bytes!\n", entry.location, entry.size)
-				}
+				fmt.eprintf("=== %v allocations not freed: ===\n", len(track.allocation_map))
 			}
+
+			// Loop through all leaked entries and print a report
+			for _, entry in track.allocation_map {
+				// Pseudo-code for filtering:
+				if strings.contains(entry.location.file_path, "core/") {
+					continue // Skips the current entry and moves to the next loop iteration [3]
+				}
+
+				fmt.eprintf("- %v bytes @ %v\n", entry.size, entry.location)
+			}
+
+			// You should also check track.bad_free_array for "bad frees" (like double free) [5]
+
+			// Destroy the tracking allocator to clean up its memory
 			mem.tracking_allocator_destroy(&track)
 		}
 	}
@@ -87,18 +103,23 @@ main :: proc() {
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Aesir")
 
 	ctx = new(Context)
+	defer free(ctx)
 	state: ^Game_State = new(Game_State)
+	defer free(state)
 	ctx.state = state
 
 	entity_init_core()
 	load_animation_data()
 
-	player: Player = {
-		hp        = 100,
-		pos       = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2},
-		jumps     = 2,
-		animation = animations[.player_idle],
-	}
+	p := new(Player)
+	defer free(p)
+	p.hp = 100
+	p.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
+	p.jumps = 2
+	p.animation = animations[.player_idle]
+
+	player = p^
+	// defer free(&player)
 
 	player_dead: bool
 	jumps: u8

@@ -6,6 +6,7 @@ import "core:strings"
 import rl "vendor:raylib"
 
 Animations :: enum {
+	none,
 	player_idle,
 	player_run,
 	player_death,
@@ -17,6 +18,7 @@ Sprite_Data :: struct {
 }
 
 sprite_data: [Animations]Sprite_Data = {
+	.none = {},
 	.player_idle = {frames = 2, duration = 0.3},
 	.player_run = {frames = 3, duration = 0.1},
 	.player_death = {frames = 3, duration = 0.2},
@@ -34,6 +36,7 @@ Animation_Data_Base :: Animation_Data {
 }
 
 animation_data: [Animations]Animation_Data = {
+	.none = {},
 	.player_idle = Animation_Data_Base,
 	.player_run = Animation_Data_Base,
 	.player_death = {scale = ANIMATION_SCALE, one_shot = true},
@@ -47,9 +50,12 @@ load_animation_data :: proc(allocator := context.allocator) {
 	fmt.printf("setting up animations")
 
 	for anim in Animations {
-		path := fmt.tprint(img_dir, anim, ".png", sep = "")
-		succ := os.is_file_path(path)
-		assert(succ, fmt.tprint(path, "not found"))
+		path: string
+		if anim != .none {
+			path = fmt.tprint(img_dir, anim, ".png", sep = "")
+			succ := os.is_file_path(path)
+			assert(succ, fmt.tprint(path, "not found"))
+		}
 
 		texture: rl.Texture2D = rl.LoadTexture(strings.clone_to_cstring(path, allocator))
 
@@ -116,6 +122,10 @@ change_animation :: proc(animation: ^Animation, new_animation: Animation) -> boo
 }
 
 draw_animation :: proc(animation: Animation, position: rl.Vector2, flip_sprite: bool) {
+	if animation.name == .none {
+		return
+	}
+
 	animation_data: Sprite_Data = animation.sprite.data
 
 	animation_width: f32 = f32(animation.sprite.texture.width)

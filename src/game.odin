@@ -75,7 +75,7 @@ main :: proc() {
 		mem.tracking_allocator_init(&track, context.allocator)
 		context.allocator = mem.tracking_allocator(&track)
 		defer {
-			if (len(track.allocation_map) > 0) {
+			if len(track.allocation_map) > 0 {
 				for i, entry in track.allocation_map {
 					fmt.printf("%v leaked %d bytes!\n", entry.location, entry.size)
 				}

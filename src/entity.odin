@@ -24,6 +24,9 @@ Entity_Handle :: struct {
 }
 
 Entity :: struct {
+	allocated:   bool,
+
+	// structs
 	handle:      Entity_Handle,
 	kind:        Entity_Kind,
 	variant:     Entity_Variant,
@@ -53,9 +56,11 @@ is_valid :: proc {
 	entity_is_valid,
 	entity_is_valid_ptr,
 }
+
 entity_is_valid :: proc(entity: Entity) -> bool {
 	return entity.handle.id != 0
 }
+
 entity_is_valid_ptr :: proc(entity: ^Entity) -> bool {
 	return entity != nil && entity_is_valid(entity^)
 }
@@ -80,6 +85,14 @@ setup_player :: proc(e: ^Entity) {
 	e.kind = .player
 
 	ctx.state.player_handle = e.handle
+
+	player: ^Player = new(Player)
+	player.hp = 100
+	player.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
+	player.jumps = 2
+	player.animation = animations[.player_idle]
+
+	e.variant = player
 
 	e.update_proc = proc(e: ^Entity) {}
 	e.draw_proc = proc(e: Entity) {}
@@ -124,6 +137,8 @@ entity_create :: proc(kind: Entity_Kind) -> ^Entity {
 	entity_setup(ent, kind)
 	fmt.assertf(ent.kind != nil, "entity %v needs to define a kind during setup", kind)
 
+	ent.allocated = true
+
 	return ent
 }
 
@@ -145,6 +160,9 @@ test_entity_create :: proc(t: ^testing.T) {
 	testing.expect_value(t, len(ctx.state.entity_free_list), 0)
 	testing.expect_value(t, len(ctx.state.entities), MAX_ENTITIES)
 
+	testing.expect_value(t, ctx.state.entities[0].allocated, false)
+	testing.expect_value(t, ctx.state.entities[1].allocated, false)
+
 	ent := entity_create(.player)
 	ent.pos = rl.Vector2{1, 1}
 	testing.expect_value(t, ent.handle.index, 1)
@@ -152,6 +170,19 @@ test_entity_create :: proc(t: ^testing.T) {
 	testing.expect_value(t, ent.handle, ctx.state.player_handle)
 
 	testing.expect_value(t, ctx.state.entities[ent.handle.index], ent^)
+
+	testing.expect(t, ent.variant != nil)
+	#partial switch variant in ent.variant {
+	case ^Player:
+		defer free(variant)
+
+		testing.expect_value(t, variant.hp, 100)
+		testing.expect_value(t, variant.jumps, 2)
+		testing.expect_value(t, variant.animation, animations[.player_idle])
+	}
+
+	testing.expect_value(t, ctx.state.entities[0].allocated, false)
+	testing.expect_value(t, ctx.state.entities[1].allocated, true)
 
 	testing.expect_value(t, ctx.state.latest_entity_id, 1)
 	testing.expect_value(t, len(ctx.state.entity_free_list), 0)

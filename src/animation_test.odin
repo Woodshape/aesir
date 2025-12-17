@@ -30,6 +30,9 @@ test_load_animations :: proc(t: ^testing.T) {
 	testing.expect_value(t, len(animations), len(Animations))
 
 	for anim in animations {
+		if anim.name == .none {
+			continue
+		}
 		log.infof("anim: %v", anim)
 
 		// all animations should have frames and frame_length at least

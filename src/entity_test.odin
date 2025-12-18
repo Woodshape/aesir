@@ -64,13 +64,13 @@ test_entity_player :: proc(t: ^testing.T) {
 	case ^Player:
 		variant.hp = 100
 		variant.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
-		variant.jumps = 2
+		variant.extra_jumps = 1
 		variant.animation = animations[.player_idle]
 
 		testing.expect_value(t, variant.hp, 100)
 		testing.expect_value(t, test_player.hp, 100)
-		testing.expect_value(t, variant.jumps, 2)
-		testing.expect_value(t, test_player.jumps, 2)
+		testing.expect_value(t, variant.extra_jumps, 1)
+		testing.expect_value(t, test_player.extra_jumps, 1)
 		testing.expect_value(t, variant.animation, animations[.player_idle])
 		testing.expect_value(t, test_player.animation, animations[.player_idle])
 	case:

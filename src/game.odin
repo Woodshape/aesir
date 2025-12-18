@@ -46,7 +46,7 @@ Player :: struct {
 	using entity: Entity,
 	hp:           i32,
 	vel:          rl.Vector2,
-	jumps:        u8,
+	extra_jumps:  u8,
 	animation:    Animation,
 	grounded:     bool,
 }
@@ -58,7 +58,7 @@ Input :: struct {
 }
 
 can_jump :: proc(player: Player, jumps_taken: u8) -> bool {
-	return jumps_taken < player.jumps
+	return jumps_taken <= player.extra_jumps
 }
 
 handle_input :: proc() -> Input {
@@ -114,7 +114,7 @@ main :: proc() {
 	player := get_player()
 	defer player_entity.delete_proc(player)
 	player.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
-	player.jumps = 2
+	player.extra_jumps = 1
 
 	player_dead: bool
 	jumps: u8
@@ -213,8 +213,8 @@ rebuild_scratch_helpers :: proc() {
 @(test)
 test_player_jump :: proc(t: ^testing.T) {
 	player: Player = {
-		pos   = rl.Vector2(0),
-		jumps = 2,
+		pos         = rl.Vector2(0),
+		extra_jumps = 1,
 	}
 
 	testing.expect(t, can_jump(player, 0))

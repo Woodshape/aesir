@@ -99,6 +99,7 @@ main :: proc() {
 	}
 
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Aesir")
+	rl.SetTargetFPS(120)
 
 	ctx = new(Context)
 	defer free(ctx)
@@ -121,6 +122,7 @@ main :: proc() {
 	for !rl.WindowShouldClose() {
 		// clear scratch
 		ctx.state.scratch = {}
+		rebuild_scratch_helpers()
 
 		rl.BeginDrawing()
 
@@ -179,14 +181,33 @@ main :: proc() {
 
 		rl.EndDrawing()
 
+		ents := get_all_ents()
 		rl.DrawText(fmt.caprintf("delta: %.6f", ctx.delta_t), 10, 10, 20, rl.BLACK)
 		rl.DrawText(fmt.caprintf("elapsed: %.2f", ctx.state.time_elapsed), 10, 30, 20, rl.BLACK)
 		rl.DrawText(fmt.caprintf("ticks: %d", ctx.state.ticks), 10, 50, 20, rl.BLACK)
+		rl.DrawText(fmt.caprintf("ents: %d", len(ents)), 10, 70, 20, rl.BLACK)
+		rl.DrawFPS(WINDOW_WIDTH - 100, 10)
 
 		free_all(context.temp_allocator)
 	}
 
 	rl.CloseWindow()
+}
+
+rebuild_scratch_helpers :: proc() {
+	// construct the list of all entities on the temp allocator
+	// that way it's easier to loop over later on
+	all_ents := make(
+		[dynamic]Entity_Handle,
+		0,
+		len(ctx.state.entities),
+		allocator = context.temp_allocator,
+	)
+	for &e in ctx.state.entities {
+		if !is_valid(e) do continue
+		append(&all_ents, e.handle)
+	}
+	ctx.state.scratch.all_entities = all_ents[:]
 }
 
 @(test)

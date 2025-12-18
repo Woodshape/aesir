@@ -106,6 +106,7 @@ setup_player :: proc(e: ^Entity) {
 	e.delete_proc = proc(variant: Entity_Variant) {
 		#partial switch var in variant {
 		case ^Player:
+			// entity_destroy(var)
 			free(var)
 		}
 	}
@@ -210,4 +211,9 @@ test_entity_create :: proc(t: ^testing.T) {
 
 	testing.expect_value(t, ctx.state.latest_entity_id, 1)
 	testing.expect_value(t, len(ctx.state.entity_free_list), 0)
+
+	rebuild_scratch_helpers()
+	ents := get_all_ents()
+	testing.expect_value(t, len(ents), 1)
+	log.infof("ents: %v\n", ents)
 }

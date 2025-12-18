@@ -21,13 +21,13 @@ entity_init :: proc "contextless" () {
 
 	ctx = test_ctx
 
-	assert(ctx.state.player_handle == Entity_Handle{})
-	assert(ctx.state.latest_entity_id == 0)
-	assert(len(ctx.state.entity_free_list) == 0)
-	assert(len(ctx.state.entities) == MAX_ENTITIES)
+	assert_contextless(ctx.state.player_handle == Entity_Handle{})
+	assert_contextless(ctx.state.latest_entity_id == 0)
+	assert_contextless(len(ctx.state.entity_free_list) == 0)
+	assert_contextless(len(ctx.state.entities) == MAX_ENTITIES)
 
-	assert(ctx.state.entities[0].allocated == false)
-	assert(ctx.state.entities[1].allocated == false)
+	assert_contextless(ctx.state.entities[0].allocated == false)
+	assert_contextless(ctx.state.entities[1].allocated == false)
 
 	test_player_ent = entity_create(.player)
 	test_player = get_player()
@@ -36,29 +36,12 @@ entity_init :: proc "contextless" () {
 @(test)
 test_entity_create :: proc(t: ^testing.T) {
 	ent := test_player_ent
-	#partial switch variant in ent.variant {
-	case ^Player:
-		variant.hp = 100
-		variant.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
-		variant.jumps = 2
-		variant.animation = animations[.player_idle]
 
-		testing.expect_value(t, variant.hp, 100)
-		testing.expect_value(t, variant.jumps, 2)
-		testing.expect_value(t, variant.animation, animations[.player_idle])
-	}
-
-	ent.pos = rl.Vector2{1, 1}
 	testing.expect_value(t, ent.handle.index, 1)
 	testing.expect_value(t, ent.handle.id, 1)
 	testing.expect_value(t, ent.handle, ctx.state.player_handle)
 
 	testing.expect_value(t, ctx.state.entities[ent.handle.index], ent^)
-
-	if var, ok := ent.variant.(^Player); !ok {
-		log.errorf("entity variant not of type '^Player': is=%v", ent.variant)
-		testing.fail(t)
-	}
 
 	testing.expect_value(t, ctx.state.entities[0].allocated, false)
 	testing.expect_value(t, ctx.state.entities[1].allocated, true)
@@ -75,4 +58,23 @@ test_entity_create :: proc(t: ^testing.T) {
 @(test)
 test_entity_player :: proc(t: ^testing.T) {
 	ent := test_player_ent
+	testing.expect_value(t, ent.variant, test_player)
+
+	#partial switch variant in ent.variant {
+	case ^Player:
+		variant.hp = 100
+		variant.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
+		variant.jumps = 2
+		variant.animation = animations[.player_idle]
+
+		testing.expect_value(t, variant.hp, 100)
+		testing.expect_value(t, test_player.hp, 100)
+		testing.expect_value(t, variant.jumps, 2)
+		testing.expect_value(t, test_player.jumps, 2)
+		testing.expect_value(t, variant.animation, animations[.player_idle])
+		testing.expect_value(t, test_player.animation, animations[.player_idle])
+	case:
+		log.errorf("entity variant not of type '^Player': is=%v", ent.variant)
+		testing.fail(t)
+	}
 }

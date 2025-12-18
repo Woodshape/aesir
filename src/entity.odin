@@ -6,9 +6,16 @@ import "core:testing"
 import rl "vendor:raylib"
 
 @(rodata)
-zero_entity: Entity = {} //readonlytodo
+zero_entity: Entity = {
+	allocated = false,
+	handle = {id = -1, index = 1},
+	kind = .none,
+} //readonlytodo
 
-Entity_Variant :: union {
+Nothing :: struct {}
+
+Entity_Variant :: union #no_nil {
+	^Nothing,
 	^Player,
 	^Enemy,
 }
@@ -43,7 +50,7 @@ Entity :: struct {
 	flip_x:      bool,
 
 	// this gets zeroed every frame. Useful for passing data to other systems.
-	scratch:     struct{},
+	scratch:     struct {},
 }
 
 get_player :: proc() -> ^Player {

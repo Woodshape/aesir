@@ -5,23 +5,24 @@ import "core:log"
 import "core:testing"
 
 Enemy :: struct {
-	hp:      i32,
-	variant: EnemyVariant,
+	using entity:  Entity,
+	hp:            i32,
+	enemy_variant: EnemyVariant,
 }
 
 new_enemy :: proc($T: typeid) -> ^T {
 	e := new(T)
-	e.variant = e
+	e.enemy_variant = e
 	return e
 }
 
 update_enemy :: proc(enemy: ^Enemy, frame_time: f32) {
-	#partial switch e_variant in enemy.variant {
+	#partial switch e_variant in enemy.enemy_variant {
 	case ^Skeleton:
-		log.infof("skeleton field 'bones': %v", e_variant.bones)
+		// log.infof("skeleton field 'bones': %v", e_variant.bones)
 		update_skeleton(e_variant, frame_time)
 	case ^Bat:
-		log.infof("bat field 'flying': %v", e_variant.flying)
+		// log.infof("bat field 'flying': %v", e_variant.flying)
 		e_variant.flying = !e_variant.flying
 	case:
 		log.panicf("unhandled variant: %v\n", e_variant)
@@ -35,7 +36,7 @@ Skeleton :: struct {
 
 update_skeleton :: proc(skeleton: ^Skeleton, frame_time: f32) {
 	skeleton.bones += 10
-	log.infof("skeleton update: %v", skeleton)
+	// log.infof("skeleton update: %v", skeleton)
 }
 
 Bat :: struct {
@@ -60,12 +61,12 @@ new_enemy_container :: proc(enemy: EnemyVariant) -> ^EnemyContainer {
 
 // your default procedure
 testProc :: proc() {
-	fmt.println("testProc called")
+	// fmt.println("testProc called")
 }
 
 // dynamic procedure
 testProcWithParam :: proc(t: $T) {
-	fmt.printfln("testProcWithParam called: %v", t)
+	// fmt.printfln("testProcWithParam called: %v", t)
 }
 
 // uuuuh, procedure groups, nifty
@@ -93,8 +94,8 @@ test_enemy_stuff :: proc(t: ^testing.T) {
 	skeleton.hp = 100
 	skeleton.bones = 250
 
-	log.infof("%v\n", skeleton)
-	log.infof("%v\n", bat)
+	// log.infof("%v\n", skeleton)
+	// log.infof("%v\n", bat)
 
 	// skeleton_container: EnemyContainer = {
 	// 	variant = skeleton,
@@ -104,22 +105,22 @@ test_enemy_stuff :: proc(t: ^testing.T) {
 	bat_container := new_enemy_container(bat)
 	defer free(bat_container)
 
-	log.infof("%v\n", skeleton_container)
+	// log.infof("%v\n", skeleton_container)
 
 	update_enemy(skeleton, 0.5)
 	update_enemy(bat, 0.5)
 
-	log.infof("%v\n", skeleton)
-	log.infof("%v\n", bat)
+	// log.infof("%v\n", skeleton)
+	// log.infof("%v\n", bat)
 
 	myEnemyList: [dynamic]^EnemyContainer
 	append(&myEnemyList, skeleton_container)
 	append(&myEnemyList, bat_container)
 	defer delete(myEnemyList)
 
-	for enemy, i in myEnemyList {
-		log.infof("enemy %d: %v", i, enemy)
-	}
+	// for enemy, i in myEnemyList {
+	// 	log.infof("enemy %d: %v", i, enemy)
+	// }
 
 	testing.expect(t, len(myEnemyList) == 2)
 }

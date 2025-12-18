@@ -143,8 +143,6 @@ entity_create :: proc(kind: Entity_Kind) -> ^Entity {
 		index = ctx.state.entity_top_count
 	}
 
-	log.infof("index: %d\n", index)
-
 	ent := &ctx.state.entities[index]
 	ent.handle.index = index
 	ent.handle.id = ctx.state.latest_entity_id + 1
@@ -215,5 +213,5 @@ test_entity_create :: proc(t: ^testing.T) {
 	rebuild_scratch_helpers()
 	ents := get_all_ents()
 	testing.expect_value(t, len(ents), 1)
-	log.infof("ents: %v\n", ents)
+	// log.infof("ents: %v\n", ents)
 }

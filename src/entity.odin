@@ -15,7 +15,7 @@ zero_entity: Entity = {
 Nothing :: struct {}
 
 Entity_Variant :: union #no_nil {
-	^Nothing,
+	Nothing,
 	^Player,
 	^Enemy,
 }
@@ -201,7 +201,7 @@ test_entity_create :: proc(t: ^testing.T) {
 	testing.expect_value(t, ctx.state.entities[ent.handle.index], ent^)
 
 	if var, ok := ent.variant.(^Player); !ok {
-		log.errorf("entity variant not of type '^Player'")
+		log.errorf("entity variant not of type '^Player': is=%v", ent.variant)
 		testing.fail(t)
 	}
 

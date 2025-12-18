@@ -33,14 +33,6 @@ entity_init :: proc "contextless" () {
 	test_player = get_player()
 }
 
-@(fini)
-entity_fini :: proc "contextless" () {
-	context = runtime.default_context()
-	free(test_ctx)
-	free(test_state)
-	test_player_ent.delete_proc(test_player)
-}
-
 @(test)
 test_entity_create :: proc(t: ^testing.T) {
 	ent := test_player_ent

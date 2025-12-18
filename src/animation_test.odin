@@ -13,15 +13,6 @@ init :: proc "contextless" () {
 	load_animation_data(context.temp_allocator)
 }
 
-@(fini)
-fini :: proc "contextless" () {
-	rl.CloseWindow()
-
-
-	context = runtime.default_context()
-	free_all(context.temp_allocator)
-}
-
 @(test)
 test_load_animations :: proc(t: ^testing.T) {
 	// all animations should be loaded

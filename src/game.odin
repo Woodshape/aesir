@@ -107,11 +107,12 @@ main :: proc() {
 	ctx.state = state
 
 	entity_init_core()
-	load_animation_data()
+	load_animation_data(context.temp_allocator)
 
 	player_entity: ^Entity = entity_create(.player)
 	player := get_player()
 	defer player_entity.delete_proc(player)
+	player.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
 	player.jumps = 2
 
 	player_dead: bool

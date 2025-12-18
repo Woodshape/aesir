@@ -50,7 +50,7 @@ Entity :: struct {
 	flip_x:      bool,
 
 	// this gets zeroed every frame. Useful for passing data to other systems.
-	scratch:     struct {},
+	scratch:     struct{},
 }
 
 get_player :: proc() -> ^Player {
@@ -200,7 +200,10 @@ test_entity_create :: proc(t: ^testing.T) {
 
 	testing.expect_value(t, ctx.state.entities[ent.handle.index], ent^)
 
-	testing.expect(t, ent.variant != nil)
+	if var, ok := ent.variant.(^Player); !ok {
+		log.errorf("entity variant not of type '^Player'")
+		testing.fail(t)
+	}
 
 	testing.expect_value(t, ctx.state.entities[0].allocated, false)
 	testing.expect_value(t, ctx.state.entities[1].allocated, true)

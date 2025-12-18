@@ -2,8 +2,6 @@
 package game
 
 import "base:runtime"
-import "core:fmt"
-import "core:log"
 import "core:testing"
 import rl "vendor:raylib"
 

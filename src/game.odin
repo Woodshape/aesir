@@ -118,7 +118,7 @@ main :: proc() {
 			skeleton := Skeleton {
 				bones = 1,
 			}
-			var.enemy_variant = &skeleton
+			var.enemy_variant = skeleton
 		}
 	}
 

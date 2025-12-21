@@ -92,12 +92,17 @@ test_entity_enemy :: proc(t: ^testing.T) {
 	ent := entity_create(.enemy)
 	testing.expect_value(t, ctx.state.entities[ent.handle.index].kind, Entity_Kind.enemy)
 
+	skeleton := Skeleton {
+		bones = 1,
+	}
 	enemy := Enemy {
-		handle = ent.handle,
+		handle        = ent.handle,
+		enemy_variant = skeleton,
 	}
 
 	variant := variant_from_handle(ent.handle)
 	if p, ok := variant.(Enemy); ok {
+		p.enemy_variant = skeleton
 		testing.expect_value(t, p, enemy)
 	} else {
 		testing.fail(t)

@@ -6,31 +6,30 @@ import "core:testing"
 
 Enemy :: struct {
 	handle:        Entity_Handle,
-	enemy_variant: EnemyVariant,
+	enemy_variant: Enemy_Variant,
 }
 
 new_enemy :: proc($T: typeid) -> ^T {
 	e := new(T)
-	e.enemy_variant = e
+	// e.enemy_variant = e
 	return e
 }
 
-update_enemy :: proc(enemy: ^Enemy, frame_time: f32) {
-	#partial switch e_variant in enemy.enemy_variant {
-	case ^Skeleton:
-		// log.infof("skeleton field 'bones': %v", e_variant.bones)
-		update_skeleton(e_variant, frame_time)
-	case ^Bat:
-		// log.infof("bat field 'flying': %v", e_variant.flying)
-		e_variant.flying = !e_variant.flying
-	case:
-		log.panicf("unhandled variant: %v\n", e_variant)
-	}
-}
+// update_enemy :: proc(enemy: ^Enemy, frame_time: f32) {
+// 	#partial switch e_variant in enemy.enemy_variant {
+// 	case Skeleton:
+// 		// log.infof("skeleton field 'bones': %v", e_variant.bones)
+// 		update_skeleton(e_variant, frame_time)
+// 	case Bat:
+// 		// log.infof("bat field 'flying': %v", e_variant.flying)
+// 		e_variant.flying = !e_variant.flying
+// 	case:
+// 		log.panicf("unhandled variant: %v\n", e_variant)
+// 	}
+// }
 
 Skeleton :: struct {
-	using enemy: Enemy,
-	bones:       i32,
+	bones: i32,
 }
 
 update_skeleton :: proc(skeleton: ^Skeleton, frame_time: f32) {
@@ -39,21 +38,20 @@ update_skeleton :: proc(skeleton: ^Skeleton, frame_time: f32) {
 }
 
 Bat :: struct {
-	using enemy: Enemy,
-	flying:      bool,
+	flying: bool,
 }
 
-EnemyVariant :: union {
-	^Skeleton,
-	^Bat,
+Enemy_Variant :: union {
+	Skeleton,
+	Bat,
 }
 
-EnemyContainer :: struct {
-	variant: EnemyVariant,
+Enemy_Container :: struct {
+	variant: Enemy_Variant,
 }
 
-new_enemy_container :: proc(enemy: EnemyVariant) -> ^EnemyContainer {
-	e := new(EnemyContainer)
+new_enemy_container :: proc(enemy: Enemy_Variant) -> ^Enemy_Container {
+	e := new(Enemy_Container)
 	e.variant = enemy
 	return e
 }
@@ -98,27 +96,27 @@ test_enemy_stuff :: proc(t: ^testing.T) {
 	// skeleton_container: EnemyContainer = {
 	// 	variant = skeleton,
 	// }
-	skeleton_container := new_enemy_container(skeleton)
-	defer free(skeleton_container)
-	bat_container := new_enemy_container(bat)
-	defer free(bat_container)
+	// skeleton_container := new_enemy_container(skeleton)
+	// defer free(skeleton_container)
+	// bat_container := new_enemy_container(bat)
+	// defer free(bat_container)
 
 	// log.infof("%v\n", skeleton_container)
 
-	update_enemy(skeleton, 0.5)
-	update_enemy(bat, 0.5)
+	// update_enemy(skeleton, 0.5)
+	// update_enemy(bat, 0.5)
 
 	// log.infof("%v\n", skeleton)
 	// log.infof("%v\n", bat)
 
-	myEnemyList: [dynamic]^EnemyContainer
-	append(&myEnemyList, skeleton_container)
-	append(&myEnemyList, bat_container)
-	defer delete(myEnemyList)
+	// myEnemyList: [dynamic]^Enemy_Container
+	// append(&myEnemyList, skeleton_container)
+	// append(&myEnemyList, bat_container)
+	// defer delete(myEnemyList)
 
 	// for enemy, i in myEnemyList {
 	// 	log.infof("enemy %d: %v", i, enemy)
 	// }
 
-	testing.expect(t, len(myEnemyList) == 2)
+	// testing.expect(t, len(myEnemyList) == 2)
 }

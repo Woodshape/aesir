@@ -2,6 +2,7 @@ package game
 
 import "core:fmt"
 import "core:log"
+import "core:math/rand"
 import "core:mem"
 import "core:strings"
 import "core:testing"
@@ -112,11 +113,14 @@ main :: proc() {
 	player.jump_force = JUMP_FORCE
 
 	for i in 0 ..< 10 {
+		r := rand.float32()
+		if r > 0.5 do continue
 		e := entity_create(.enemy)
 		#partial switch &var in variant_from_handle(e.handle) {
 		case Enemy:
+			bones := rand.int_max(10) + 1
 			skeleton := Skeleton {
-				bones = 1,
+				bones = i32(bones),
 			}
 			var.enemy_variant = skeleton
 		}

@@ -112,6 +112,10 @@ setup_player :: proc(e: ^Entity) {
 		handle = e.handle,
 	}
 
+	if v, ok := ctx.state.variants[e.handle.index].(Nothing); !ok {
+		fmt.assertf(false, "entity for handle %v already exists: %v", e.handle, v)
+	}
+
 	ctx.state.variants[e.handle.index] = player
 }
 
@@ -120,6 +124,10 @@ setup_enemy :: proc(e: ^Entity) {
 
 	enemy: Enemy = {
 		handle = e.handle,
+	}
+
+	if v, ok := ctx.state.variants[e.handle.index].(Nothing); !ok {
+		fmt.assertf(false, "entity for handle %v already exists: %v", e.handle, v)
 	}
 
 	ctx.state.variants[e.handle.index] = enemy

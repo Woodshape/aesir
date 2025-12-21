@@ -64,15 +64,15 @@ get_player :: proc() -> ^Entity {
 }
 
 get_variant_from_handle :: proc(handle: Entity_Handle) -> Entity_Variant {
-	switch var in ctx.state.variants[handle.id] {
-	case Nothing:
+	variant := ctx.state.variants[handle.index]
+	#partial switch var in variant {
 	case Player:
 		return var
 	case Enemy:
 		return var
-
+	case:
+		return nothing_entity
 	}
-	return nothing_entity
 }
 
 get_all_variants :: proc() -> []Entity_Handle {

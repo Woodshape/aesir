@@ -31,7 +31,7 @@ entity_init :: proc "contextless" () {
 
 	test_player_ent = entity_create(.player)
 	test_player = new(Player)
-	ctx.state.variants[test_player_ent.handle.id] = test_player^
+	test_player.handle = test_player_ent.handle
 }
 
 @(test)
@@ -69,9 +69,11 @@ test_entity_player :: proc(t: ^testing.T) {
 @(test)
 test_entity_enemy :: proc(t: ^testing.T) {
 	ent := entity_create(.enemy)
-	enemy := Enemy{}
-	ctx.state.variants[ent.handle.id] = enemy
 	testing.expect_value(t, ctx.state.entities[ent.handle.index].kind, Entity_Kind.enemy)
+
+	enemy := Enemy {
+		handle = ent.handle,
+	}
 
 	variant := get_variant_from_handle(ent.handle)
 	testing.expect_value(t, variant, enemy)

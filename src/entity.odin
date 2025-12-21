@@ -127,10 +127,22 @@ entity_setup :: proc(e: ^Entity, kind: Entity_Kind) {
 setup_player :: proc(e: ^Entity) {
 	e.kind = .player
 	ctx.state.player_handle = e.handle
+
+	player: Player = {
+		handle = e.handle,
+	}
+
+	ctx.state.variants[e.handle.index] = player
 }
 
 setup_enemy :: proc(e: ^Entity) {
 	e.kind = .enemy
+
+	enemy: Enemy = {
+		handle = e.handle,
+	}
+
+	ctx.state.variants[e.handle.index] = enemy
 }
 
 entity_from_handle :: proc(handle: Entity_Handle) -> (entity: ^Entity, ok: bool) #optional_ok {

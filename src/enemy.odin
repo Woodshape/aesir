@@ -5,6 +5,7 @@ import "core:log"
 import "core:testing"
 
 Enemy :: struct {
+	handle:        Entity_Handle,
 	enemy_variant: EnemyVariant,
 }
 

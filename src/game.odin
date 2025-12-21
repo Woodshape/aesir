@@ -110,11 +110,6 @@ main :: proc() {
 	player.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
 	player.jump_force = JUMP_FORCE
 
-	p := Player {
-		handle = player.handle,
-	}
-	ctx.state.variants[p.handle.id] = p
-
 	fmt.println("variants: ", get_all_variants())
 
 	p_var := get_variant_from_handle(ctx.state.player_handle)

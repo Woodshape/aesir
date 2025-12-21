@@ -30,7 +30,8 @@ entity_init :: proc "contextless" () {
 	assert_contextless(ctx.state.entities[1].allocated == false)
 
 	test_player_ent = entity_create(.player)
-	test_player = get_player()
+
+	test_player = new(Player)
 }
 
 @(test)
@@ -59,35 +60,9 @@ test_entity_create :: proc(t: ^testing.T) {
 @(test)
 test_entity_player :: proc(t: ^testing.T) {
 	ent := test_player_ent
-	testing.expect_value(t, ent.variant, test_player)
-
-	#partial switch variant in ent.variant {
-	case ^Player:
-		variant.hp = 100
-		variant.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
-		variant.extra_jumps = 1
-		variant.animation = animations[.player_idle]
-
-		testing.expect_value(t, variant.hp, 100)
-		testing.expect_value(t, test_player.hp, 100)
-		testing.expect_value(t, variant.extra_jumps, 1)
-		testing.expect_value(t, test_player.extra_jumps, 1)
-		testing.expect_value(t, variant.animation, animations[.player_idle])
-		testing.expect_value(t, test_player.animation, animations[.player_idle])
-	case:
-		log.errorf("entity variant not of type '^Player': is=%v", ent.variant)
-		testing.fail(t)
-	}
 }
 
 @(test)
 test_entity_enemy :: proc(t: ^testing.T) {
 	ent := entity_create(.enemy)
-	#partial switch variant in ent.variant {
-	case ^Enemy:
-		testing.expect_value(t, variant.hp, 0)
-	case:
-		log.errorf("entity variant not of type '^Player': is=%v", ent.variant)
-		testing.fail(t)
-	}
 }

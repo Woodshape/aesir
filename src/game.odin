@@ -26,9 +26,11 @@ Game_State :: struct {
 	entity_top_count: int,
 	latest_entity_id: int,
 	entities:         [MAX_ENTITIES]Entity,
+	variants:         [MAX_ENTITIES]Entity_Variant,
 	entity_free_list: [dynamic]int,
 
 	// player stuff
+	player:           ^Player,
 	player_handle:    Entity_Handle,
 	scratch:          struct {
 		all_entities: []Entity_Handle,
@@ -43,11 +45,10 @@ Context :: struct {
 ctx: ^Context
 
 Player :: struct {
-	using entity: Entity,
+	using handle: Entity_Handle,
 	hp:           i32,
 	vel:          rl.Vector2,
 	extra_jumps:  u8,
-	animation:    Animation,
 	grounded:     bool,
 }
 
@@ -110,11 +111,17 @@ main :: proc() {
 	entity_init_core()
 	load_animation_data(context.temp_allocator)
 
-	player_entity: ^Entity = entity_create(.player)
-	player := get_player()
-	defer player_entity.delete_proc(player)
-	player.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
+	player := new(Player)
+	ctx.state.player = player
+
 	player.extra_jumps = 1
+
+	player_entity: ^Entity = entity_create(.player)
+	player_entity.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
+
+	fmt.println("variants: ", get_all_variants())
+
+	p := get_variant_from_handle(ctx.state.player_handle)
 
 	player_dead: bool
 	jumps: u8
@@ -136,24 +143,28 @@ main :: proc() {
 		if !player_dead {
 			if input.move_left {
 				player.vel.x = -SPEED
-				player.flip_x = true
-				change_animation(&player.animation, animations[.player_run])
+				player_entity.flip_x = true
+				change_animation(&player_entity.animation, animations[.player_run])
 			} else if input.move_right {
 				player.vel.x = SPEED
-				player.flip_x = false
-				change_animation(&player.animation, animations[.player_run])
+				player_entity.flip_x = false
+				change_animation(&player_entity.animation, animations[.player_run])
 			} else {
 				player.vel.x = 0.0
-				change_animation(&player.animation, animations[.player_idle])
+				change_animation(&player_entity.animation, animations[.player_idle])
 			}
 		} else {
 			rl.DrawText("You are Dead", WINDOW_WIDTH / 2 - 200, WINDOW_HEIGHT / 2, 50, rl.BLACK)
 		}
 
 		if rl.IsKeyPressed(.F) {
-			change_animation(&player.animation, animations[.player_death])
+			change_animation(&player_entity.animation, animations[.player_death])
 			player_dead = !player_dead
 			player.vel.x = 0.0
+
+			fmt.println("player: ", player)
+			fmt.println("entity: ", player_entity)
+			fmt.println("variant: ", p)
 		}
 
 		player.vel.y += GRAVITY * ctx.delta_t
@@ -164,20 +175,20 @@ main :: proc() {
 			jumps += 1
 		}
 
-		player.pos += player.vel * ctx.delta_t
+		player_entity.pos += player.vel * ctx.delta_t
 
 		floor_pos: f32 = f32(rl.GetScreenHeight()) - 96
-		if player.pos.y > floor_pos {
-			player.pos.y = floor_pos
+		if player_entity.pos.y > floor_pos {
+			player_entity.pos.y = floor_pos
 			player.grounded = true
 			jumps = 0
 		}
 
-		update_animation(&player.animation, ctx.delta_t)
+		update_animation(&player_entity.animation, ctx.delta_t)
 
 		rl.ClearBackground(rl.SKYBLUE)
 
-		draw_animation(player.animation, player.pos, player.flip_x)
+		draw_animation(player_entity.animation, player_entity.pos, player_entity.flip_x)
 
 		rl.EndDrawing()
 
@@ -213,7 +224,6 @@ rebuild_scratch_helpers :: proc() {
 @(test)
 test_player_jump :: proc(t: ^testing.T) {
 	player: Player = {
-		pos         = rl.Vector2(0),
 		extra_jumps = 1,
 	}
 

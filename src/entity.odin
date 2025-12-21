@@ -12,6 +12,8 @@ zero_entity: Entity = {
 	kind = .none,
 } //readonlytodo
 
+@(rodata)
+nothing_entity: Nothing = {}
 Nothing :: struct {}
 
 Entity_Variant :: union #no_nil {
@@ -32,35 +34,56 @@ Entity_Handle :: struct {
 }
 
 Entity :: struct {
-	allocated:   bool,
+	using handle: Entity_Handle,
+	allocated:    bool,
 
 	// structs
-	handle:      Entity_Handle,
-	kind:        Entity_Kind,
-	variant:     Entity_Variant,
+	kind:         Entity_Kind,
 
 	// callbacks
-	update_proc: proc(_: ^Entity),
-	draw_proc:   proc(_: Entity),
-	delete_proc: proc(_: Entity_Variant),
+	update_proc:  proc(_: ^Entity),
+	draw_proc:    proc(_: Entity),
 
 	// big sloppy entity state dump.
 	// add whatever you need in here.
-	pos:         rl.Vector2,
-	flip_x:      bool,
+	animation:    Animation,
+	pos:          rl.Vector2,
+	flip_x:       bool,
 
 	// this gets zeroed every frame. Useful for passing data to other systems.
-	scratch:     struct{},
+	scratch:      struct{},
 }
 
-get_player :: proc() -> ^Player {
-	player_handle := entity_from_handle(ctx.state.player_handle)
-	#partial switch variant in player_handle.variant {
+get_player :: proc() -> ^Entity {
+	return entity_from_handle(ctx.state.player_handle)
+}
+
+get_variant_from_handle :: proc(handle: Entity_Handle) -> Entity_Variant {
+	switch var in ctx.state.variants[handle.id] {
+	case Nothing:
 	case ^Player:
-		return variant
-	case:
-		panic("player variant not accessable from handle")
+		return var
+	case ^Enemy:
+		return var
+
 	}
+	return nothing_entity
+}
+
+get_all_variants :: proc() -> []Entity_Handle {
+	all_ents := make(
+		[dynamic]Entity_Handle,
+		0,
+		len(ctx.state.variants),
+		allocator = context.temp_allocator,
+	)
+	for e in ctx.state.variants {
+		#partial switch v in e {
+		case ^Player:
+			append(&all_ents, v.handle)
+		}
+	}
+	return all_ents[:]
 }
 
 get_all_ents :: proc() -> []Entity_Handle {
@@ -90,55 +113,32 @@ entity_setup :: proc(e: ^Entity, kind: Entity_Kind) {
 	switch kind {
 	case .none:
 	case .player:
-		setup_player(e)
+		setup_player(e, ctx.state.player)
 	case .enemy:
 		setup_enemy(e)
 	}
 }
 
-setup_player :: proc(e: ^Entity) {
+setup_player :: proc(e: ^Entity, p: ^Player) {
 	e.kind = .player
-
+	p.handle = e.handle
 	ctx.state.player_handle = e.handle
-
-	player: ^Player = new(Player)
-	player.entity = e^
-
-	e.delete_proc = proc(variant: Entity_Variant) {
-		#partial switch var in variant {
-		case ^Player:
-			// entity_destroy(var)
-			free(var)
-		}
-	}
-
-	e.variant = player
+	ctx.state.variants[e.handle.id] = p
 }
 
 setup_enemy :: proc(e: ^Entity) {
 	e.kind = .enemy
-
-	enemy: ^Enemy = new(Enemy)
-	enemy.entity = e^
-
-	e.delete_proc = proc(variant: Entity_Variant) {
-		#partial switch var in variant {
-		case ^Enemy:
-			// entity_destroy(var)
-			free(var)
-		}
-	}
-
-	e.variant = enemy
 }
 
 entity_from_handle :: proc(handle: Entity_Handle) -> (entity: ^Entity, ok: bool) #optional_ok {
 	if handle.index <= 0 || handle.index > ctx.state.entity_top_count {
+		log.errorf("index out of bounds: %d\n", handle.index)
 		return &zero_entity, false
 	}
 
 	ent := &ctx.state.entities[handle.index]
 	if ent.handle.id != handle.id {
+		log.warnf("no entity found for handle: %d\n", handle.id)
 		return &zero_entity, false
 	}
 

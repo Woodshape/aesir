@@ -111,9 +111,33 @@ main :: proc() {
 	player.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
 	player.jump_force = JUMP_FORCE
 
+	for i in 0 ..< 10 {
+		e := entity_create(.enemy)
+		#partial switch &var in variant_from_handle(e.handle) {
+		case Enemy:
+			skeleton := Skeleton {
+				bones = 1,
+			}
+			var.enemy_variant = &skeleton
+		}
+	}
+
+	rebuild_scratch_helpers()
+	fmt.println("ents: ", get_all_ents())
 	fmt.println("variants: ", get_all_variants())
 
-	p_var := get_variant_from_handle(ctx.state.player_handle)
+	for e_handle in get_all_ents() {
+		e := entity_from_handle(e_handle)
+		fmt.println(e)
+	}
+	for e_handle in get_all_variants() {
+		e := variant_from_handle(e_handle)
+		if e_var, ok := e.(Enemy); ok {
+			fmt.println(e_var.enemy_variant)
+		}
+	}
+
+	p_var := variant_from_handle(ctx.state.player_handle)
 
 	player_dead: bool
 	jumps: u8

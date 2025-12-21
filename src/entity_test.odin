@@ -78,7 +78,7 @@ test_entity_player :: proc(t: ^testing.T) {
 
 	testing.expect_value(t, ctx.state.entities[ent.handle.index].kind, Entity_Kind.player)
 
-	variant := get_variant_from_handle(ent.handle)
+	variant := variant_from_handle(ent.handle)
 	testing.expect_value(t, variant, test_player^)
 
 	testing.expect_value(t, ent.hp, 100)
@@ -93,6 +93,6 @@ test_entity_enemy :: proc(t: ^testing.T) {
 		handle = ent.handle,
 	}
 
-	variant := get_variant_from_handle(ent.handle)
+	variant := variant_from_handle(ent.handle)
 	testing.expect_value(t, variant, enemy)
 }

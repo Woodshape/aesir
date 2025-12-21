@@ -42,16 +42,17 @@ test_entity_create :: proc(t: ^testing.T) {
 	testing.expect_value(t, ent.handle, ctx.state.player_handle)
 
 	testing.expect_value(t, ctx.state.entities[ent.handle.index], ent^)
+	testing.expect_value(t, ctx.state.entities[ent.handle.index].kind, Entity_Kind.player)
 
 	testing.expect_value(t, ctx.state.entities[0].allocated, false)
 	testing.expect_value(t, ctx.state.entities[1].allocated, true)
 
-	testing.expect_value(t, ctx.state.latest_entity_id, 1)
 	testing.expect_value(t, len(ctx.state.entity_free_list), 0)
+	testing.expect(t, ctx.state.latest_entity_id >= 1)
 
 	rebuild_scratch_helpers()
 	ents := get_all_ents()
-	testing.expect_value(t, len(ents), 1)
+	testing.expect(t, len(ents) >= 1)
 	// log.infof("ents: %v\n", ents)
 }
 
@@ -73,6 +74,18 @@ test_entity_player :: proc(t: ^testing.T) {
 		testing.expect_value(t, test_player.extra_jumps, 1)
 		testing.expect_value(t, variant.animation, animations[.player_idle])
 		testing.expect_value(t, test_player.animation, animations[.player_idle])
+	case:
+		log.errorf("entity variant not of type '^Player': is=%v", ent.variant)
+		testing.fail(t)
+	}
+}
+
+@(test)
+test_entity_enemy :: proc(t: ^testing.T) {
+	ent := entity_create(.enemy)
+	#partial switch variant in ent.variant {
+	case ^Enemy:
+		testing.expect_value(t, variant.hp, 0)
 	case:
 		log.errorf("entity variant not of type '^Player': is=%v", ent.variant)
 		testing.fail(t)

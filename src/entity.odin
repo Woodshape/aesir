@@ -102,6 +102,7 @@ setup_player :: proc(e: ^Entity) {
 	ctx.state.player_handle = e.handle
 
 	player: ^Player = new(Player)
+	player.entity = e^
 
 	e.delete_proc = proc(variant: Entity_Variant) {
 		#partial switch var in variant {
@@ -116,6 +117,19 @@ setup_player :: proc(e: ^Entity) {
 
 setup_enemy :: proc(e: ^Entity) {
 	e.kind = .enemy
+
+	enemy: ^Enemy = new(Enemy)
+	enemy.entity = e^
+
+	e.delete_proc = proc(variant: Entity_Variant) {
+		#partial switch var in variant {
+		case ^Enemy:
+			// entity_destroy(var)
+			free(var)
+		}
+	}
+
+	e.variant = enemy
 }
 
 entity_from_handle :: proc(handle: Entity_Handle) -> (entity: ^Entity, ok: bool) #optional_ok {

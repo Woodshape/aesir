@@ -5,8 +5,6 @@ import "core:log"
 import "core:testing"
 
 Enemy :: struct {
-	using entity:  Entity,
-	hp:            i32,
 	enemy_variant: EnemyVariant,
 }
 
@@ -91,7 +89,6 @@ test_enemy_stuff :: proc(t: ^testing.T) {
 	bat: ^Bat = new_enemy(Bat)
 	defer free(bat)
 
-	skeleton.hp = 100
 	skeleton.bones = 250
 
 	// log.infof("%v\n", skeleton)

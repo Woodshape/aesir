@@ -34,24 +34,28 @@ Entity_Handle :: struct {
 }
 
 Entity :: struct {
-	using handle: Entity_Handle,
-	allocated:    bool,
+	allocated:   bool,
 
 	// structs
-	kind:         Entity_Kind,
+	handle:      Entity_Handle,
+	kind:        Entity_Kind,
 
 	// callbacks
-	update_proc:  proc(_: ^Entity),
-	draw_proc:    proc(_: Entity),
+	update_proc: proc(_: ^Entity),
+	draw_proc:   proc(_: Entity),
 
 	// big sloppy entity state dump.
 	// add whatever you need in here.
-	animation:    Animation,
-	pos:          rl.Vector2,
-	flip_x:       bool,
+	animation:   Animation,
+	hp:          i32,
+	pos:         rl.Vector2,
+	vel:         rl.Vector2,
+	flip_x:      bool,
+	extra_jumps: u8,
+	grounded:    bool,
 
 	// this gets zeroed every frame. Useful for passing data to other systems.
-	scratch:      struct{},
+	scratch:     struct{},
 }
 
 get_player :: proc() -> ^Entity {

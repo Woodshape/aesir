@@ -18,8 +18,8 @@ Nothing :: struct {}
 
 Entity_Variant :: union #no_nil {
 	Nothing,
-	^Player,
-	^Enemy,
+	Player,
+	Enemy,
 }
 
 Entity_Kind :: enum {
@@ -52,6 +52,7 @@ Entity :: struct {
 	vel:         rl.Vector2,
 	flip_x:      bool,
 	extra_jumps: u8,
+	jump_force:  f32,
 	grounded:    bool,
 
 	// this gets zeroed every frame. Useful for passing data to other systems.
@@ -65,9 +66,9 @@ get_player :: proc() -> ^Entity {
 get_variant_from_handle :: proc(handle: Entity_Handle) -> Entity_Variant {
 	switch var in ctx.state.variants[handle.id] {
 	case Nothing:
-	case ^Player:
+	case Player:
 		return var
-	case ^Enemy:
+	case Enemy:
 		return var
 
 	}
@@ -83,7 +84,7 @@ get_all_variants :: proc() -> []Entity_Handle {
 	)
 	for e in ctx.state.variants {
 		#partial switch v in e {
-		case ^Player:
+		case Player:
 			append(&all_ents, v.handle)
 		}
 	}
@@ -117,17 +118,15 @@ entity_setup :: proc(e: ^Entity, kind: Entity_Kind) {
 	switch kind {
 	case .none:
 	case .player:
-		setup_player(e, ctx.state.player)
+		setup_player(e)
 	case .enemy:
 		setup_enemy(e)
 	}
 }
 
-setup_player :: proc(e: ^Entity, p: ^Player) {
+setup_player :: proc(e: ^Entity) {
 	e.kind = .player
-	p.handle = e.handle
 	ctx.state.player_handle = e.handle
-	ctx.state.variants[e.handle.id] = p
 }
 
 setup_enemy :: proc(e: ^Entity) {

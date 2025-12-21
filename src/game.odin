@@ -10,7 +10,7 @@ import rl "vendor:raylib"
 WINDOW_WIDTH :: 1280
 WINDOW_HEIGHT :: 720
 
-JUMP_FORCE: f32 = 600.0
+JUMP_FORCE: f32 : 600.0
 SPEED: f32 : 400.0
 GRAVITY: f32 : 2000.0
 
@@ -30,7 +30,6 @@ Game_State :: struct {
 	entity_free_list: [dynamic]int,
 
 	// player stuff
-	player:           ^Player,
 	player_handle:    Entity_Handle,
 	scratch:          struct {
 		all_entities: []Entity_Handle,
@@ -107,13 +106,14 @@ main :: proc() {
 	entity_init_core()
 	load_animation_data(context.temp_allocator)
 
-	p := new(Player)
-	ctx.state.player = p
-
-
 	player: ^Entity = entity_create(.player)
 	player.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
-	player.extra_jumps = 1
+	player.jump_force = JUMP_FORCE
+
+	p := Player {
+		handle = player.handle,
+	}
+	ctx.state.variants[p.handle.id] = p
 
 	fmt.println("variants: ", get_all_variants())
 
@@ -160,13 +160,13 @@ main :: proc() {
 
 			fmt.println("player: ", player)
 			fmt.println("entity: ", player)
-			fmt.println("variant: ", p)
+			fmt.println("variant: ", p_var)
 		}
 
 		player.vel.y += GRAVITY * ctx.delta_t
 
 		if input.jump && can_jump(player^, jumps) {
-			player.vel.y = -JUMP_FORCE
+			player.vel.y = -player.jump_force
 			player.grounded = false
 			jumps += 1
 		}

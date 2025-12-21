@@ -79,9 +79,12 @@ test_entity_player :: proc(t: ^testing.T) {
 	testing.expect_value(t, ctx.state.entities[ent.handle.index].kind, Entity_Kind.player)
 
 	variant := variant_from_handle(ent.handle)
-	testing.expect_value(t, variant, test_player^)
-
-	testing.expect_value(t, ent.hp, 100)
+	if p, ok := variant.(Player); ok {
+		testing.expect_value(t, p, test_player^)
+		testing.expect_value(t, ent.hp, 100)
+	} else {
+		testing.fail(t)
+	}
 }
 
 @(test)
@@ -94,5 +97,9 @@ test_entity_enemy :: proc(t: ^testing.T) {
 	}
 
 	variant := variant_from_handle(ent.handle)
-	testing.expect_value(t, variant, enemy)
+	if p, ok := variant.(Enemy); ok {
+		testing.expect_value(t, p, enemy)
+	} else {
+		testing.fail(t)
+	}
 }

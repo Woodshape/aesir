@@ -76,19 +76,7 @@ get_variant_from_handle :: proc(handle: Entity_Handle) -> Entity_Variant {
 }
 
 get_all_variants :: proc() -> []Entity_Handle {
-	all_ents := make(
-		[dynamic]Entity_Handle,
-		0,
-		len(ctx.state.variants),
-		allocator = context.temp_allocator,
-	)
-	for e in ctx.state.variants {
-		#partial switch v in e {
-		case Player:
-			append(&all_ents, v.handle)
-		}
-	}
-	return all_ents[:]
+	return ctx.state.scratch.all_variants
 }
 
 get_all_ents :: proc() -> []Entity_Handle {
@@ -187,5 +175,6 @@ entity_create :: proc(kind: Entity_Kind) -> ^Entity {
 
 entity_destroy :: proc(e: ^Entity) {
 	append(&ctx.state.entity_free_list, e.handle.index)
+	ctx.state.variants[e.handle.index] = nothing_entity
 	e^ = {}
 }

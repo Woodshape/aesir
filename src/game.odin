@@ -33,6 +33,7 @@ Game_State :: struct {
 	player_handle:    Entity_Handle,
 	scratch:          struct {
 		all_entities: []Entity_Handle,
+		all_variants: []Entity_Handle,
 	},
 }
 
@@ -210,6 +211,22 @@ rebuild_scratch_helpers :: proc() {
 		append(&all_ents, e.handle)
 	}
 	ctx.state.scratch.all_entities = all_ents[:]
+
+	all_variants := make(
+		[dynamic]Entity_Handle,
+		0,
+		len(ctx.state.variants),
+		allocator = context.temp_allocator,
+	)
+	for e in ctx.state.variants {
+		#partial switch v in e {
+		case Player:
+			append(&all_variants, v.handle)
+		case Enemy:
+			append(&all_variants, v.handle)
+		}
+	}
+	ctx.state.scratch.all_variants = all_variants[:]
 }
 
 @(test)

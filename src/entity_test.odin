@@ -54,16 +54,34 @@ test_entity_create :: proc(t: ^testing.T) {
 	rebuild_scratch_helpers()
 	ents := get_all_ents()
 	testing.expect(t, len(ents) >= 1)
-	// log.infof("ents: %v\n", ents)
+
+	vars := get_all_variants()
+	testing.expect(t, len(vars) >= 1)
+
+	entity_destroy(ent)
+	rebuild_scratch_helpers()
+	ents_after_des := get_all_ents()
+	vars_after_des := get_all_variants()
+
+	testing.expect_value(t, len(ents_after_des), len(ents) - 1)
+	testing.expect_value(t, len(vars_after_des), len(vars) - 1)
+
+	testing.expect_value(t, ctx.state.entities[ent.handle.index], ent^)
+
+	delete(ctx.state.entity_free_list)
 }
 
 @(test)
 test_entity_player :: proc(t: ^testing.T) {
 	ent := test_player_ent
+	ent.hp = 100
+
 	testing.expect_value(t, ctx.state.entities[ent.handle.index].kind, Entity_Kind.player)
 
 	variant := get_variant_from_handle(ent.handle)
 	testing.expect_value(t, variant, test_player^)
+
+	testing.expect_value(t, ent.hp, 100)
 }
 
 @(test)

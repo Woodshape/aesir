@@ -89,8 +89,14 @@ test_entity_player :: proc(t: ^testing.T) {
 
 @(test)
 test_entity_enemy :: proc(t: ^testing.T) {
-	ent := entity_create(.enemy)
-	testing.expect_value(t, ctx.state.entities[ent.handle.index].kind, Entity_Kind.enemy)
+	local_ctx := new(Context)
+	defer free(local_ctx)
+	local_state: ^Game_State = new(Game_State)
+	defer free(local_state)
+	local_ctx.state = local_state
+
+	ent := entity_create(.enemy, local_ctx)
+	testing.expect_value(t, local_ctx.state.entities[ent.handle.index].kind, Entity_Kind.enemy)
 
 	skeleton := Skeleton {
 		bones = 1,
@@ -100,11 +106,12 @@ test_entity_enemy :: proc(t: ^testing.T) {
 		enemy_variant = skeleton,
 	}
 
-	variant := variant_from_handle(ent.handle)
+	variant := variant_from_handle(ent.handle, local_ctx)
 	if p, ok := variant.(Enemy); ok {
 		p.enemy_variant = skeleton
 		testing.expect_value(t, p, enemy)
 	} else {
+		log.fatal(variant)
 		testing.fail(t)
 	}
 }

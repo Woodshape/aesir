@@ -63,7 +63,16 @@ get_player :: proc() -> ^Entity {
 	return entity_from_handle(ctx.state.player_handle)
 }
 
-variant_from_handle :: proc(handle: Entity_Handle) -> ^Entity_Variant {
+variant_from_handle :: proc {
+	variant_from_handle_raw,
+	variant_from_handle_with_ctx,
+}
+
+variant_from_handle_raw :: proc(handle: Entity_Handle) -> ^Entity_Variant {
+	return variant_from_handle_with_ctx(handle, ctx)
+}
+
+variant_from_handle_with_ctx :: proc(handle: Entity_Handle, ctx: ^Context) -> ^Entity_Variant {
 	return &ctx.state.variants[handle.index]
 }
 
@@ -91,20 +100,20 @@ entity_is_valid_ptr :: proc(entity: ^Entity) -> bool {
 entity_init_core :: proc() {
 	// make sure the zero entity has good defaults, so we don't crash on stuff like functions pointers
 	fmt.assertf(zero_entity.kind == .none, "zero entity kind invalid: %v", zero_entity.kind)
-	entity_setup(&zero_entity, nil)
+	entity_setup(&zero_entity, nil, ctx)
 }
 
-entity_setup :: proc(e: ^Entity, kind: Entity_Kind) {
+entity_setup :: proc(e: ^Entity, kind: Entity_Kind, ctx: ^Context) {
 	switch kind {
 	case .none:
 	case .player:
-		setup_player(e)
+		setup_player(e, ctx)
 	case .enemy:
-		setup_enemy(e)
+		setup_enemy(e, ctx)
 	}
 }
 
-setup_player :: proc(e: ^Entity) {
+setup_player :: proc(e: ^Entity, ctx: ^Context) {
 	e.kind = .player
 	ctx.state.player_handle = e.handle
 
@@ -119,7 +128,7 @@ setup_player :: proc(e: ^Entity) {
 	ctx.state.variants[e.handle.index] = player
 }
 
-setup_enemy :: proc(e: ^Entity) {
+setup_enemy :: proc(e: ^Entity, ctx: ^Context) {
 	e.kind = .enemy
 
 	enemy: Enemy = {
@@ -148,7 +157,16 @@ entity_from_handle :: proc(handle: Entity_Handle) -> (entity: ^Entity, ok: bool)
 	return ent, true
 }
 
-entity_create :: proc(kind: Entity_Kind) -> ^Entity {
+entity_create :: proc {
+	entity_create_raw,
+	entity_create_with_ctx,
+}
+
+entity_create_raw :: proc(kind: Entity_Kind) -> ^Entity {
+	return entity_create_with_ctx(kind, ctx)
+}
+
+entity_create_with_ctx :: proc(kind: Entity_Kind, ctx: ^Context) -> ^Entity {
 	index := -1
 	if len(ctx.state.entity_free_list) > 0 {
 		index = pop(&ctx.state.entity_free_list)
@@ -165,7 +183,7 @@ entity_create :: proc(kind: Entity_Kind) -> ^Entity {
 	ent.handle.id = ctx.state.latest_entity_id + 1
 	ctx.state.latest_entity_id = ent.handle.id
 
-	entity_setup(ent, kind)
+	entity_setup(ent, kind, ctx)
 	fmt.assertf(ent.kind != nil, "entity %v needs to define a kind during setup", kind)
 
 	ent.allocated = true

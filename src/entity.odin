@@ -63,24 +63,15 @@ get_player :: proc() -> ^Entity {
 	return entity_from_handle(ctx.state.player_handle)
 }
 
-variant_from_handle :: proc {
-	variant_from_handle_raw,
-	variant_from_handle_with_ctx,
-}
-
-variant_from_handle_raw :: proc(handle: Entity_Handle) -> ^Entity_Variant {
-	return variant_from_handle_with_ctx(handle, ctx)
-}
-
-variant_from_handle_with_ctx :: proc(handle: Entity_Handle, ctx: ^Context) -> ^Entity_Variant {
+variant_from_handle :: proc(handle: Entity_Handle, ctx: ^Context = ctx) -> ^Entity_Variant {
 	return &ctx.state.variants[handle.index]
 }
 
-get_all_variants :: proc() -> []Entity_Handle {
+get_all_variants :: proc(ctx: ^Context = ctx) -> []Entity_Handle {
 	return ctx.state.scratch.all_variants
 }
 
-get_all_ents :: proc() -> []Entity_Handle {
+get_all_ents :: proc(ctx: ^Context = ctx) -> []Entity_Handle {
 	return ctx.state.scratch.all_entities
 }
 
@@ -103,7 +94,7 @@ entity_init_core :: proc() {
 	entity_setup(&zero_entity, nil, ctx)
 }
 
-entity_setup :: proc(e: ^Entity, kind: Entity_Kind, ctx: ^Context) {
+entity_setup :: proc(e: ^Entity, kind: Entity_Kind, ctx: ^Context = ctx) {
 	switch kind {
 	case .none:
 	case .player:
@@ -113,7 +104,7 @@ entity_setup :: proc(e: ^Entity, kind: Entity_Kind, ctx: ^Context) {
 	}
 }
 
-setup_player :: proc(e: ^Entity, ctx: ^Context) {
+setup_player :: proc(e: ^Entity, ctx: ^Context = ctx) {
 	e.kind = .player
 	ctx.state.player_handle = e.handle
 
@@ -157,16 +148,7 @@ entity_from_handle :: proc(handle: Entity_Handle) -> (entity: ^Entity, ok: bool)
 	return ent, true
 }
 
-entity_create :: proc {
-	entity_create_raw,
-	entity_create_with_ctx,
-}
-
-entity_create_raw :: proc(kind: Entity_Kind) -> ^Entity {
-	return entity_create_with_ctx(kind, ctx)
-}
-
-entity_create_with_ctx :: proc(kind: Entity_Kind, ctx: ^Context) -> ^Entity {
+entity_create :: proc(kind: Entity_Kind, ctx: ^Context = ctx) -> ^Entity {
 	index := -1
 	if len(ctx.state.entity_free_list) > 0 {
 		index = pop(&ctx.state.entity_free_list)
@@ -191,7 +173,7 @@ entity_create_with_ctx :: proc(kind: Entity_Kind, ctx: ^Context) -> ^Entity {
 	return ent
 }
 
-entity_destroy :: proc(e: ^Entity) {
+entity_destroy :: proc(e: ^Entity, ctx: ^Context = ctx) {
 	append(&ctx.state.entity_free_list, e.handle.index)
 	ctx.state.variants[e.handle.index] = nothing_entity
 	e^ = {}

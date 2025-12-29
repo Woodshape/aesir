@@ -63,15 +63,15 @@ get_player :: proc() -> ^Entity {
 	return entity_from_handle(ctx.state.player_handle)
 }
 
-variant_from_handle :: proc(handle: Entity_Handle, ctx: ^Context = ctx) -> ^Entity_Variant {
+variant_from_handle :: proc(handle: Entity_Handle, ctx := ctx) -> ^Entity_Variant {
 	return &ctx.state.variants[handle.index]
 }
 
-get_all_variants :: proc(ctx: ^Context = ctx) -> []Entity_Handle {
+get_all_variants :: proc(ctx := ctx) -> []Entity_Handle {
 	return ctx.state.scratch.all_variants
 }
 
-get_all_ents :: proc(ctx: ^Context = ctx) -> []Entity_Handle {
+get_all_ents :: proc(ctx := ctx) -> []Entity_Handle {
 	return ctx.state.scratch.all_entities
 }
 
@@ -91,10 +91,10 @@ entity_is_valid_ptr :: proc(entity: ^Entity) -> bool {
 entity_init_core :: proc() {
 	// make sure the zero entity has good defaults, so we don't crash on stuff like functions pointers
 	fmt.assertf(zero_entity.kind == .none, "zero entity kind invalid: %v", zero_entity.kind)
-	entity_setup(&zero_entity, nil, ctx)
+	entity_setup(&zero_entity, nil)
 }
 
-entity_setup :: proc(e: ^Entity, kind: Entity_Kind, ctx: ^Context = ctx) {
+entity_setup :: proc(e: ^Entity, kind: Entity_Kind, ctx := ctx) {
 	switch kind {
 	case .none:
 	case .player:
@@ -104,7 +104,7 @@ entity_setup :: proc(e: ^Entity, kind: Entity_Kind, ctx: ^Context = ctx) {
 	}
 }
 
-setup_player :: proc(e: ^Entity, ctx: ^Context = ctx) {
+setup_player :: proc(e: ^Entity, ctx := ctx) {
 	e.kind = .player
 	ctx.state.player_handle = e.handle
 
@@ -119,7 +119,7 @@ setup_player :: proc(e: ^Entity, ctx: ^Context = ctx) {
 	ctx.state.variants[e.handle.index] = player
 }
 
-setup_enemy :: proc(e: ^Entity, ctx: ^Context) {
+setup_enemy :: proc(e: ^Entity, ctx := ctx) {
 	e.kind = .enemy
 
 	enemy: Enemy = {
@@ -133,7 +133,13 @@ setup_enemy :: proc(e: ^Entity, ctx: ^Context) {
 	ctx.state.variants[e.handle.index] = enemy
 }
 
-entity_from_handle :: proc(handle: Entity_Handle) -> (entity: ^Entity, ok: bool) #optional_ok {
+entity_from_handle :: proc(
+	handle: Entity_Handle,
+	ctx := ctx,
+) -> (
+	entity: ^Entity,
+	ok: bool,
+) #optional_ok {
 	if handle.index <= 0 || handle.index > ctx.state.entity_top_count {
 		log.errorf("index out of bounds: %d\n", handle.index)
 		return &zero_entity, false
@@ -148,7 +154,7 @@ entity_from_handle :: proc(handle: Entity_Handle) -> (entity: ^Entity, ok: bool)
 	return ent, true
 }
 
-entity_create :: proc(kind: Entity_Kind, ctx: ^Context = ctx) -> ^Entity {
+entity_create :: proc(kind: Entity_Kind, ctx := ctx) -> ^Entity {
 	index := -1
 	if len(ctx.state.entity_free_list) > 0 {
 		index = pop(&ctx.state.entity_free_list)
@@ -173,7 +179,7 @@ entity_create :: proc(kind: Entity_Kind, ctx: ^Context = ctx) -> ^Entity {
 	return ent
 }
 
-entity_destroy :: proc(e: ^Entity, ctx: ^Context = ctx) {
+entity_destroy :: proc(e: ^Entity, ctx := ctx) {
 	append(&ctx.state.entity_free_list, e.handle.index)
 	ctx.state.variants[e.handle.index] = nothing_entity
 	e^ = {}

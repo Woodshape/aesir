@@ -146,8 +146,8 @@ main :: proc() {
 
 	weapon: ^Weapon = new(Weapon)
 	weapon.sprite.texture = rl.LoadTexture("res/images/sword.png")
-	weapon.origin = rl.Vector2{f32(weapon.sprite.texture.width) * 0.5, 20} // 5px from top edge
-	weapon.offset = {64, 64}
+	weapon.origin = rl.Vector2{f32(weapon.sprite.texture.width) * 0.5, 64} // 5px from top edge
+	weapon.offset = {32, 48}
 
 	for i in 0 ..< 10 {
 		r := rand.float32()
@@ -254,8 +254,8 @@ main :: proc() {
 			{
 				player.pos.x + weapon.offset.x,
 				player.pos.y + weapon.offset.y,
-				f32(weapon_sprite.width),
-				f32(weapon_sprite.height),
+				f32(weapon_sprite.width) * ANIMATION_SCALE.x,
+				f32(weapon_sprite.height) * ANIMATION_SCALE.y,
 			},
 			weapon.origin,
 			weapon.rotation_angle,

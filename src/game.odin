@@ -66,7 +66,8 @@ Weapon :: struct {
 	// Current rotation angle, usually stored in radians or degrees
 	rotation_angle: f32,
 	// Optional: Offset relative to the player's center/pivot point
-	pivot_offset:   rl.Vector2,
+	offset:         rl.Vector2,
+	origin:         rl.Vector2,
 }
 
 update_weapon_aim :: proc(player: ^Entity, weapon: ^Weapon, mouse_pos: rl.Vector2) {
@@ -145,7 +146,8 @@ main :: proc() {
 
 	weapon: ^Weapon = new(Weapon)
 	weapon.sprite.texture = rl.LoadTexture("res/images/sword.png")
-	origin := rl.Vector2{f32(weapon.sprite.texture.width) * 0.5, 20} // 5px from top edge
+	weapon.origin = rl.Vector2{f32(weapon.sprite.texture.width) * 0.5, 20} // 5px from top edge
+	weapon.offset = {64, 64}
 
 	for i in 0 ..< 10 {
 		r := rand.float32()
@@ -249,8 +251,13 @@ main :: proc() {
 		rl.DrawTexturePro(
 			weapon_sprite,
 			{0, 0, f32(weapon_sprite.width), f32(weapon_sprite.height)},
-			{player.pos.x, player.pos.y, f32(weapon_sprite.width), f32(weapon_sprite.height)},
-			origin,
+			{
+				player.pos.x + weapon.offset.x,
+				player.pos.y + weapon.offset.y,
+				f32(weapon_sprite.width),
+				f32(weapon_sprite.height),
+			},
+			weapon.origin,
 			weapon.rotation_angle,
 			rl.WHITE,
 		)

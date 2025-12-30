@@ -73,14 +73,14 @@ load_animation_data :: proc(allocator := context.allocator) {
 	}
 }
 
-Sprite :: struct {
+Animation_Sprite :: struct {
 	data:    Sprite_Data,
 	texture: rl.Texture2D,
 }
 
 Animation :: struct {
 	name:          Animations,
-	sprite:        Sprite,
+	sprite:        Animation_Sprite,
 	data:          Animation_Data,
 	current_frame: i8,
 	frame_timer:   f32,

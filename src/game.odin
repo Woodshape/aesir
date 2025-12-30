@@ -2,6 +2,7 @@ package game
 
 import "core:fmt"
 import "core:log"
+import "core:math"
 import "core:math/rand"
 import "core:mem"
 import "core:strings"
@@ -54,6 +55,36 @@ Input :: struct {
 	move_right: bool,
 	jump:       bool,
 }
+
+Weapon_Sprite :: struct {
+	texture: rl.Texture2D,
+}
+
+Weapon :: struct {
+	// Texture
+	sprite:         Weapon_Sprite,
+	// Current rotation angle, usually stored in radians or degrees
+	rotation_angle: f32,
+	// Optional: Offset relative to the player's center/pivot point
+	pivot_offset:   rl.Vector2,
+}
+
+update_weapon_aim :: proc(player: ^Entity, weapon: ^Weapon, mouse_pos: rl.Vector2) {
+	// 1. Calculate the Direction Vector
+	// Direction = Mouse Position - Player Position.
+	// This uses array programming (vector subtraction) [2].
+	direction := mouse_pos - player.pos
+
+	// 2. Calculate the Angle
+	// Use the trigonometric function atan2(y, x) to get the angle in radians.
+	// This procedure assumes access to `core:math` procedures:
+	angle_rad := math.atan2(direction.y, direction.x)
+
+	// 3. Convert to Degrees and Store
+	// Convert radians to degrees for ease of use in most 2D rendering APIs (if needed).
+	weapon.rotation_angle = angle_rad * (180.0 / math.PI)
+}
+
 
 can_jump :: proc(entity: Entity, jumps_taken: u8) -> bool {
 	return jumps_taken <= entity.extra_jumps
@@ -111,6 +142,10 @@ main :: proc() {
 	player: ^Entity = entity_create(.player)
 	player.pos = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2}
 	player.jump_force = JUMP_FORCE
+
+	weapon: ^Weapon = new(Weapon)
+	weapon.sprite.texture = rl.LoadTexture("res/images/sword.png")
+	origin := rl.Vector2{f32(weapon.sprite.texture.width) * 0.5, 20} // 5px from top edge
 
 	for i in 0 ..< 10 {
 		r := rand.float32()
@@ -204,11 +239,21 @@ main :: proc() {
 			jumps = 0
 		}
 
+		update_weapon_aim(player, weapon, rl.GetMousePosition())
 		update_animation(&player.animation, ctx.delta_t)
 
 		rl.ClearBackground(rl.SKYBLUE)
 
 		draw_animation(player.animation, player.pos, player.flip_x)
+		weapon_sprite := weapon.sprite.texture
+		rl.DrawTexturePro(
+			weapon_sprite,
+			{0, 0, f32(weapon_sprite.width), f32(weapon_sprite.height)},
+			{player.pos.x, player.pos.y, f32(weapon_sprite.width), f32(weapon_sprite.height)},
+			origin,
+			weapon.rotation_angle,
+			rl.WHITE,
+		)
 
 		rl.EndDrawing()
 

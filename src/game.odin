@@ -225,16 +225,7 @@ main :: proc() {
 	rl.CloseWindow()
 }
 
-rebuild_scratch_helpers :: proc {
-	rebuild_scratch_helpers_raw,
-	rebuild_scratch_helpers_with_ctx,
-}
-
-rebuild_scratch_helpers_raw :: proc() {
-	rebuild_scratch_helpers_with_ctx(ctx)
-}
-
-rebuild_scratch_helpers_with_ctx :: proc(ctx: ^Context) {
+rebuild_scratch_helpers :: proc(ctx := ctx) {
 	// construct the list of all entities on the temp allocator
 	// that way it's easier to loop over later on
 	all_ents := make(

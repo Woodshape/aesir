@@ -71,19 +71,20 @@ Weapon :: struct {
 }
 
 update_weapon_aim :: proc(player: ^Entity, weapon: ^Weapon, mouse_pos: rl.Vector2) {
-	// 1. Calculate the Direction Vector
-	// Direction = Mouse Position - Player Position.
-	// This uses array programming (vector subtraction) [2].
 	direction := mouse_pos - player.pos
 
-	// 2. Calculate the Angle
-	// Use the trigonometric function atan2(y, x) to get the angle in radians.
-	// This procedure assumes access to `core:math` procedures:
 	angle_rad := math.atan2(direction.y, direction.x)
 
-	// 3. Convert to Degrees and Store
-	// Convert radians to degrees for ease of use in most 2D rendering APIs (if needed).
 	weapon.rotation_angle = angle_rad * (180.0 / math.PI)
+
+	distance := f32(50.0) // Adjust this value for desired distance from player
+
+	if player.flip_x {
+		// angle_rad = math.PI - angle_rad
+	}
+
+	weapon.offset.x = f32(math.cos(angle_rad)) * distance
+	weapon.offset.y = f32(math.sin(angle_rad)) * distance
 }
 
 
@@ -146,8 +147,7 @@ main :: proc() {
 
 	weapon: ^Weapon = new(Weapon)
 	weapon.sprite.texture = rl.LoadTexture("res/images/sword.png")
-	weapon.origin = rl.Vector2{f32(weapon.sprite.texture.width) * 0.5, 64} // 5px from top edge
-	weapon.offset = {32, 48}
+	weapon.origin = rl.Vector2{f32(weapon.sprite.texture.width) * 0.5, 64}
 
 	for i in 0 ..< 10 {
 		r := rand.float32()
@@ -247,20 +247,7 @@ main :: proc() {
 		rl.ClearBackground(rl.SKYBLUE)
 
 		draw_animation(player.animation, player.pos, player.flip_x)
-		weapon_sprite := weapon.sprite.texture
-		rl.DrawTexturePro(
-			weapon_sprite,
-			{0, 0, f32(weapon_sprite.width), f32(weapon_sprite.height)},
-			{
-				player.pos.x + weapon.offset.x,
-				player.pos.y + weapon.offset.y,
-				f32(weapon_sprite.width) * ANIMATION_SCALE.x,
-				f32(weapon_sprite.height) * ANIMATION_SCALE.y,
-			},
-			weapon.origin,
-			weapon.rotation_angle,
-			rl.WHITE,
-		)
+		draw_weapon(weapon^, player^)
 
 		rl.EndDrawing()
 
@@ -275,6 +262,34 @@ main :: proc() {
 	}
 
 	rl.CloseWindow()
+}
+
+draw_weapon :: proc(weapon: Weapon, player: Entity) {
+	weapon_sprite := weapon.sprite.texture
+
+	// Calculate actual player center based on current animation
+	player_anim := player.animation
+	player_width :=
+		f32(player_anim.sprite.texture.width) /
+		f32(player_anim.sprite.data.frames) *
+		player_anim.data.scale.x
+	player_height := f32(player_anim.sprite.texture.height) * player_anim.data.scale.y
+	player_center_x := player.pos.x + player_width * 0.5
+	player_center_y := player.pos.y + player_height * 0.5
+
+	rl.DrawTexturePro(
+		weapon_sprite,
+		{0, 0, f32(weapon_sprite.width), f32(weapon_sprite.height)},
+		{
+			player_center_x + weapon.offset.x,
+			player_center_y + weapon.offset.y,
+			f32(weapon_sprite.width) * ANIMATION_SCALE.x,
+			f32(weapon_sprite.height) * ANIMATION_SCALE.y,
+		},
+		weapon.origin,
+		weapon.rotation_angle,
+		rl.WHITE,
+	)
 }
 
 rebuild_scratch_helpers :: proc(ctx := ctx) {

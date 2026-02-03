@@ -149,6 +149,7 @@ main :: proc() {
 	weapon.sprite.texture = rl.LoadTexture("res/images/sword.png")
 	weapon.origin = rl.Vector2{f32(weapon.sprite.texture.width) * 0.5, 64}
 
+
 	for i in 0 ..< 10 {
 		r := rand.float32()
 		if r > 0.5 do continue

@@ -19,15 +19,15 @@ test_entity_create :: proc(t: ^testing.T) {
 
 	ent := test_player_ent
 
-	testing.expect_value(t, ent.handle.index, 1)
+	testing.expect_value(t, ent.handle.index, 0)
 	testing.expect_value(t, ent.handle.id, 1)
 	testing.expect_value(t, ent.handle, local_ctx.state.player_handle)
 
-	testing.expect_value(t, local_ctx.state.entities[ent.handle.index], ent^)
-	testing.expect_value(t, local_ctx.state.entities[ent.handle.index].kind, Entity_Kind.player)
+	testing.expect_value(t, local_ctx.state.entities[0].kind, Entity_Kind.player)
+	testing.expect_value(t, local_ctx.state.entities[1].kind, Entity_Kind.none)
 
-	testing.expect_value(t, local_ctx.state.entities[0].allocated, false)
-	testing.expect_value(t, local_ctx.state.entities[1].allocated, true)
+	testing.expect_value(t, local_ctx.state.entities[0].allocated, true)
+	testing.expect_value(t, local_ctx.state.entities[1].allocated, false)
 
 	testing.expect_value(t, len(local_ctx.state.entity_free_list), 0)
 	testing.expect(t, local_ctx.state.latest_entity_id >= 1)

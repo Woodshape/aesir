@@ -140,7 +140,7 @@ entity_from_handle :: proc(
 	entity: ^Entity,
 	ok: bool,
 ) #optional_ok {
-	if handle.index <= 0 || handle.index > ctx.state.entity_top_count {
+	if handle.index < 0 || handle.index > ctx.state.entity_top_count {
 		log.errorf("index out of bounds: %d\n", handle.index)
 		return &zero_entity, false
 	}
@@ -156,14 +156,20 @@ entity_from_handle :: proc(
 
 entity_create :: proc(kind: Entity_Kind, ctx := ctx) -> ^Entity {
 	index := -1
-	if len(ctx.state.entity_free_list) > 0 {
-		index = pop(&ctx.state.entity_free_list)
-	}
 
-	if index == -1 {
-		assert(ctx.state.entity_top_count + 1 < MAX_ENTITIES, "ran out of entities, increase size")
-		ctx.state.entity_top_count += 1
-		index = ctx.state.entity_top_count
+	// Reserve index 0 for the player entity.
+	if kind == .player {
+		index = 0
+	} else {
+		if len(ctx.state.entity_free_list) > 0 {
+			index = pop(&ctx.state.entity_free_list)
+		}
+
+		if index == -1 {
+			assert(ctx.state.entity_top_count + 1 < MAX_ENTITIES, "ran out of entities, increase size")
+			ctx.state.entity_top_count += 1
+			index = ctx.state.entity_top_count
+		}
 	}
 
 	ent := &ctx.state.entities[index]

@@ -5,6 +5,32 @@ import "core:log"
 import "core:testing"
 import rl "vendor:raylib"
 
+Projectile :: struct {
+	handle:       Entity_Handle,
+	damage:       i32,
+	life_time:    f32,
+	pierce_count: i32,
+	hit_entities: [16]int,
+	num_hits:     int,
+	shooter_id:   int,
+	is_melee:     bool,
+	color:        rl.Color,
+}
+
+projectile_has_hit :: proc(proj: Projectile, id: int) -> bool {
+	for i in 0 ..< proj.num_hits {
+		if proj.hit_entities[i] == id do return true
+	}
+	return false
+}
+
+projectile_add_hit :: proc(proj: ^Projectile, id: int) {
+	if proj.num_hits < 16 {
+		proj.hit_entities[proj.num_hits] = id
+		proj.num_hits += 1
+	}
+}
+
 @(rodata)
 zero_entity: Entity = {
 	allocated = false,
@@ -20,12 +46,14 @@ Entity_Variant :: union #no_nil {
 	Nothing,
 	Player,
 	Enemy,
+	Projectile,
 }
 
 Entity_Kind :: enum {
 	none,
 	player,
 	enemy,
+	projectile,
 }
 
 Entity_Handle :: struct {
@@ -50,6 +78,7 @@ Entity :: struct {
 	hp:          i32,
 	pos:         rl.Vector2,
 	vel:         rl.Vector2,
+	radius:      f32,
 	flip_x:      bool,
 	extra_jumps: u8,
 	jump_force:  f32,
@@ -101,6 +130,8 @@ entity_setup :: proc(e: ^Entity, kind: Entity_Kind, ctx := ctx) {
 		setup_player(e, ctx)
 	case .enemy:
 		setup_enemy(e, ctx)
+	case .projectile:
+		setup_projectile(e, ctx)
 	}
 }
 
@@ -131,6 +162,20 @@ setup_enemy :: proc(e: ^Entity, ctx := ctx) {
 	}
 
 	ctx.state.variants[e.handle.index] = enemy
+}
+
+setup_projectile :: proc(e: ^Entity, ctx := ctx) {
+	e.kind = .projectile
+
+	proj: Projectile = {
+		handle = e.handle,
+	}
+
+	if v, ok := ctx.state.variants[e.handle.index].(Nothing); !ok {
+		fmt.assertf(false, "entity for handle %v already exists: %v", e.handle, v)
+	}
+
+	ctx.state.variants[e.handle.index] = proj
 }
 
 entity_from_handle :: proc(
